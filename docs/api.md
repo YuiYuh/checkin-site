@@ -105,6 +105,8 @@ Authorization: Bearer <token>
 
 ## 目标模块
 
+> Day 3 仅实现目标基础接口：创建、列表、详情、删除。MVP 阶段当前用户临时固定为 `userId=1`。
+
 ### 创建目标
 
 - URL：`POST /api/goals`
@@ -181,7 +183,21 @@ Authorization: Bearer <token>
 }
 ```
 
-### 查看目标统计
+### 删除目标
+
+- URL：`DELETE /api/goals/{goalId}`
+- 说明：根据目标 ID 删除目标
+
+响应数据：
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": null
+}
+```
+
+### 查看目标统计（暂未实现）
 
 - URL：`GET /api/goals/{goalId}/stats`
 - 说明：统计累计打卡天数和连续打卡天数
