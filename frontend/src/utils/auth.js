@@ -38,7 +38,7 @@ export const onAuthChange = (handler) => {
   window.addEventListener('storage', handler)
 
   return () => {
-    window.removeEventListener(AUTH_EVENT, handler)
     window.removeEventListener('storage', handler)
+    window.removeEventListener(AUTH_EVENT, handler)
   }
 }
