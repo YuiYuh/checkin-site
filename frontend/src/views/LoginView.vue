@@ -8,6 +8,7 @@ import { DEFAULT_TOKEN, DEFAULT_USER, saveAuth } from '../utils/auth'
 const route = useRoute()
 const router = useRouter()
 const loading = ref(false)
+const enableDemoUser = import.meta.env.VITE_ENABLE_DEMO_USER === 'true'
 const form = reactive({
   username: '',
   password: '',
@@ -89,7 +90,7 @@ const useDemo = () => {
         <el-button type="primary" size="large" :loading="loading" @click="login">
           登录
         </el-button>
-        <el-button size="large" @click="useDemo">
+        <el-button v-if="enableDemoUser" size="large" @click="useDemo">
           使用默认用户
         </el-button>
       </el-form>

@@ -3,6 +3,7 @@ package com.habitlink.controller;
 import com.habitlink.common.AuthUtil;
 import com.habitlink.common.Result;
 import com.habitlink.dto.GoalCreateRequest;
+import com.habitlink.dto.GoalListResponse;
 import com.habitlink.dto.GoalStatsResponse;
 import com.habitlink.entity.Goal;
 import com.habitlink.service.GoalService;
@@ -32,7 +33,7 @@ public class GoalController {
     }
 
     @GetMapping
-    public Result<List<Goal>> listGoals(@RequestHeader(value = "Authorization", required = false) String authorization) {
+    public Result<List<GoalListResponse>> listGoals(@RequestHeader(value = "Authorization", required = false) String authorization) {
         return Result.success(goalService.listGoals(AuthUtil.parseUserId(authorization)));
     }
 

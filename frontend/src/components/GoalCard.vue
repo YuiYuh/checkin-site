@@ -29,8 +29,19 @@ const emit = defineEmits(['checkin', 'delete'])
   <el-card class="goal-card" shadow="never">
     <div class="goal-card-top">
       <div>
-        <h3>{{ props.goal.title }}</h3>
+        <div class="goal-title-line">
+          <h3>{{ props.goal.title }}</h3>
+          <el-tag v-if="props.goal.goalType === 'TEAM'" type="warning" effect="plain">
+            小组目标
+          </el-tag>
+          <el-tag v-else effect="plain">
+            个人目标
+          </el-tag>
+        </div>
         <p>{{ props.goal.description || '暂无描述' }}</p>
+        <p v-if="props.goal.goalType === 'TEAM'" class="goal-team-name">
+          所属小组：{{ props.goal.teamName || '-' }}
+        </p>
       </div>
 
       <el-tag :type="props.checkedToday ? 'success' : 'info'" effect="plain">
@@ -68,6 +79,7 @@ const emit = defineEmits(['checkin', 'delete'])
       <el-button
         type="danger"
         plain
+        :disabled="props.goal.goalType === 'TEAM'"
         :loading="props.deleting"
         @click="emit('delete', props.goal)"
       >

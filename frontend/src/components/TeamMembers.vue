@@ -26,6 +26,10 @@ const props = defineProps({
 
 const emit = defineEmits(['transfer-owner'])
 
+const teamGoalTitle = computed(() => {
+  return props.todayCheckins.find((item) => item.goalTitle)?.goalTitle || props.team?.goalTitle || ''
+})
+
 const rows = computed(() => {
   const checkinMap = new Map(
     props.todayCheckins.map((item) => [item.userId, Boolean(item.checkedToday)]),
@@ -55,6 +59,9 @@ const currentUserIsOwner = computed(() => {
           <p v-if="props.team">
             {{ props.team.name }} · 邀请码：{{ props.team.inviteCode || '-' }}
           </p>
+          <p v-if="props.team">
+            小组目标：{{ teamGoalTitle || '未绑定目标' }}
+          </p>
         </div>
       </div>
     </template>
@@ -79,10 +86,10 @@ const currentUserIsOwner = computed(() => {
         </template>
       </el-table-column>
 
-      <el-table-column prop="checkedToday" label="今日状态" width="140">
+      <el-table-column prop="checkedToday" label="小组目标状态" min-width="190">
         <template #default="{ row }">
           <el-tag :type="row.checkedToday ? 'success' : 'info'" effect="plain">
-            {{ row.checkedToday ? '今日已打卡' : '今日未打卡' }}
+            {{ row.checkedToday ? '今日已完成小组目标' : '今日未完成小组目标' }}
           </el-tag>
         </template>
       </el-table-column>

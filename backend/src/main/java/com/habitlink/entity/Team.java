@@ -22,6 +22,8 @@ public class Team {
 
     private String inviteCode;
 
+    private Long goalId;
+
     private Integer status;
 
     private LocalDateTime createdAt;

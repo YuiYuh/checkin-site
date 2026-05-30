@@ -4,13 +4,16 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.habitlink.dto.TeamCheckinTodayResponse;
 import com.habitlink.dto.TeamCreateRequest;
 import com.habitlink.dto.TeamJoinRequest;
+import com.habitlink.dto.TeamListResponse;
 import com.habitlink.dto.TeamMemberResponse;
 import com.habitlink.dto.TeamTransferOwnerRequest;
 import com.habitlink.entity.CheckinRecord;
+import com.habitlink.entity.Goal;
 import com.habitlink.entity.Team;
 import com.habitlink.entity.TeamMember;
 import com.habitlink.entity.User;
 import com.habitlink.mapper.CheckinMapper;
+import com.habitlink.mapper.GoalMapper;
 import com.habitlink.mapper.TeamMapper;
 import com.habitlink.mapper.TeamMemberMapper;
 import com.habitlink.mapper.UserMapper;
@@ -46,19 +49,30 @@ public class TeamServiceImpl implements TeamService {
     private final TeamMemberMapper teamMemberMapper;
     private final UserMapper userMapper;
     private final CheckinMapper checkinMapper;
+    private final GoalMapper goalMapper;
 
     @Override
     @Transactional
-    public Team createTeam(TeamCreateRequest request, Long currentUserId) {
+    public TeamListResponse createTeam(TeamCreateRequest request, Long currentUserId) {
         if (request == null || !StringUtils.hasText(request.getName())) {
             throw new IllegalArgumentException("小组名称不能为空");
         }
+
+        Goal goal = new Goal();
+        goal.setUserId(currentUserId);
+        goal.setTitle(StringUtils.hasText(request.getGoalTitle()) ? request.getGoalTitle() : request.getName());
+        goal.setDescription(StringUtils.hasText(request.getGoalDescription()) ? request.getGoalDescription() : request.getDescription());
+        goal.setStartDate(request.getStartDate() == null ? LocalDate.now() : request.getStartDate());
+        goal.setEndDate(request.getEndDate());
+        goal.setStatus(DEFAULT_STATUS);
+        goalMapper.insert(goal);
 
         Team team = new Team();
         team.setCreatorId(currentUserId);
         team.setName(request.getName());
         team.setDescription(request.getDescription());
         team.setInviteCode(generateUniqueInviteCode());
+        team.setGoalId(goal.getId());
         team.setStatus(DEFAULT_STATUS);
         teamMapper.insert(team);
 
@@ -68,7 +82,16 @@ public class TeamServiceImpl implements TeamService {
         owner.setRole(OWNER_ROLE);
         teamMemberMapper.insert(owner);
 
-        return team;
+        return new TeamListResponse(
+                team.getId(),
+                team.getCreatorId(),
+                team.getName(),
+                team.getDescription(),
+                team.getInviteCode(),
+                team.getGoalId(),
+                goal.getTitle(),
+                team.getStatus()
+        );
     }
 
     @Override
@@ -165,7 +188,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    public List<Team> listMyTeams(Long currentUserId) {
+    public List<TeamListResponse> listMyTeams(Long currentUserId) {
         List<TeamMember> memberships = teamMemberMapper.selectList(new LambdaQueryWrapper<TeamMember>()
                 .eq(TeamMember::getUserId, currentUserId)
                 .orderByDesc(TeamMember::getJoinedAt));
@@ -176,8 +199,25 @@ public class TeamServiceImpl implements TeamService {
         List<Long> teamIds = memberships.stream()
                 .map(TeamMember::getTeamId)
                 .toList();
-        return teamMapper.selectList(new LambdaQueryWrapper<Team>()
+        List<Team> teams = teamMapper.selectList(new LambdaQueryWrapper<Team>()
                 .in(Team::getId, teamIds));
+
+        Map<Long, Goal> goalMap = selectGoalsByTeams(teams);
+        return teams.stream()
+                .map(team -> {
+                    Goal goal = goalMap.get(team.getGoalId());
+                    return new TeamListResponse(
+                            team.getId(),
+                            team.getCreatorId(),
+                            team.getName(),
+                            team.getDescription(),
+                            team.getInviteCode(),
+                            team.getGoalId(),
+                            goal == null ? null : goal.getTitle(),
+                            team.getStatus()
+                    );
+                })
+                .toList();
     }
 
     @Override
@@ -206,7 +246,7 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     public List<TeamCheckinTodayResponse> listTodayCheckins(Long teamId, Long currentUserId) {
-        validateTeamExists(teamId);
+        Team team = validateTeamExists(teamId);
         checkCurrentUserInTeam(teamId, currentUserId);
 
         List<TeamMember> members = listTeamMembers(teamId);
@@ -214,8 +254,11 @@ public class TeamServiceImpl implements TeamService {
             return Collections.emptyList();
         }
 
+        Goal goal = team.getGoalId() == null ? null : goalMapper.selectById(team.getGoalId());
+        Set<Long> checkedUserIds = team.getGoalId() == null
+                ? Collections.emptySet()
+                : selectCheckedUserIdsToday(members, team.getGoalId());
         Map<Long, User> userMap = selectUsersByMembers(members);
-        Set<Long> checkedUserIds = selectCheckedUserIdsToday(members);
 
         return members.stream()
                 .map(member -> {
@@ -223,10 +266,28 @@ public class TeamServiceImpl implements TeamService {
                     return new TeamCheckinTodayResponse(
                             member.getUserId(),
                             user == null ? null : user.getNickname(),
-                            checkedUserIds.contains(member.getUserId())
+                            checkedUserIds.contains(member.getUserId()),
+                            team.getGoalId(),
+                            goal == null ? null : goal.getTitle()
                     );
                 })
                 .toList();
+    }
+
+    private Map<Long, Goal> selectGoalsByTeams(List<Team> teams) {
+        List<Long> goalIds = teams.stream()
+                .map(Team::getGoalId)
+                .filter(goalId -> goalId != null)
+                .distinct()
+                .toList();
+        if (goalIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return goalMapper.selectList(new LambdaQueryWrapper<Goal>()
+                        .in(Goal::getId, goalIds))
+                .stream()
+                .collect(Collectors.toMap(Goal::getId, Function.identity()));
     }
 
     private String generateUniqueInviteCode() {
@@ -255,11 +316,13 @@ public class TeamServiceImpl implements TeamService {
         }
     }
 
-    private void validateTeamExists(Long teamId) {
+    private Team validateTeamExists(Long teamId) {
         validateTeamId(teamId);
-        if (teamMapper.selectById(teamId) == null) {
+        Team team = teamMapper.selectById(teamId);
+        if (team == null) {
             throw new IllegalArgumentException("小组不存在");
         }
+        return team;
     }
 
     private TeamMember findMember(List<TeamMember> members, Long userId) {
@@ -303,7 +366,7 @@ public class TeamServiceImpl implements TeamService {
                 .collect(Collectors.toMap(User::getId, Function.identity()));
     }
 
-    private Set<Long> selectCheckedUserIdsToday(List<TeamMember> members) {
+    private Set<Long> selectCheckedUserIdsToday(List<TeamMember> members, Long goalId) {
         List<Long> userIds = members.stream()
                 .map(TeamMember::getUserId)
                 .distinct()
@@ -315,6 +378,7 @@ public class TeamServiceImpl implements TeamService {
         List<CheckinRecord> records = checkinMapper.selectList(new LambdaQueryWrapper<CheckinRecord>()
                 .select(CheckinRecord::getUserId)
                 .in(CheckinRecord::getUserId, userIds)
+                .eq(CheckinRecord::getGoalId, goalId)
                 .eq(CheckinRecord::getCheckinDate, LocalDate.now()));
 
         return records.stream()

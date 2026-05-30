@@ -1,6 +1,7 @@
 package com.habitlink.service;
 
 import com.habitlink.dto.GoalCreateRequest;
+import com.habitlink.dto.GoalListResponse;
 import com.habitlink.dto.GoalStatsResponse;
 import com.habitlink.entity.Goal;
 
@@ -10,7 +11,7 @@ public interface GoalService {
 
     Goal createGoal(GoalCreateRequest request, Long currentUserId);
 
-    List<Goal> listGoals(Long currentUserId);
+    List<GoalListResponse> listGoals(Long currentUserId);
 
     Goal getGoal(Long goalId, Long currentUserId);
 

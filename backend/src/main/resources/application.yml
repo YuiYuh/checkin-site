@@ -4,11 +4,8 @@ server:
 spring:
   application:
     name: habitlink-backend
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/habitlink?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
-    username: root
-    password: 123456
+  profiles:
+    active: dev
 
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml

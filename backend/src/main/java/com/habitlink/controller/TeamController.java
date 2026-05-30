@@ -5,6 +5,7 @@ import com.habitlink.common.Result;
 import com.habitlink.dto.TeamCheckinTodayResponse;
 import com.habitlink.dto.TeamCreateRequest;
 import com.habitlink.dto.TeamJoinRequest;
+import com.habitlink.dto.TeamListResponse;
 import com.habitlink.dto.TeamMemberResponse;
 import com.habitlink.dto.TeamTransferOwnerRequest;
 import com.habitlink.entity.Team;
@@ -28,8 +29,8 @@ public class TeamController {
     private final TeamService teamService;
 
     @PostMapping
-    public Result<Team> createTeam(@RequestBody TeamCreateRequest request,
-                                   @RequestHeader(value = "Authorization", required = false) String authorization) {
+    public Result<TeamListResponse> createTeam(@RequestBody TeamCreateRequest request,
+                                               @RequestHeader(value = "Authorization", required = false) String authorization) {
         return Result.success(teamService.createTeam(request, AuthUtil.parseUserId(authorization)));
     }
 
@@ -53,7 +54,7 @@ public class TeamController {
     }
 
     @GetMapping("/my")
-    public Result<List<Team>> listMyTeams(@RequestHeader(value = "Authorization", required = false) String authorization) {
+    public Result<List<TeamListResponse>> listMyTeams(@RequestHeader(value = "Authorization", required = false) String authorization) {
         return Result.success(teamService.listMyTeams(AuthUtil.parseUserId(authorization)));
     }
 

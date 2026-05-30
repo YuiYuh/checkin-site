@@ -237,9 +237,26 @@ p {
   font-size: 20px;
 }
 
+.goal-title-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.goal-title-line h3 {
+  margin-bottom: 0;
+}
+
 .goal-card p {
   color: #6b7280;
   line-height: 1.6;
+}
+
+.goal-team-name {
+  margin-top: 6px;
+  font-size: 14px;
 }
 
 .goal-dates {
@@ -355,6 +372,12 @@ p {
   border-radius: 6px;
   color: #1d4ed8;
   background: #dbeafe;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.team-goal-name {
+  color: #374151;
   font-size: 13px;
   font-weight: 600;
 }

@@ -151,7 +151,7 @@ onMounted(loadTeams)
       <div>
         <p class="eyebrow">Teams</p>
         <h1>小组协作</h1>
-        <p>创建小组、通过邀请码加入小组，并查看成员今日打卡状态。</p>
+        <p>创建小组共同目标、通过邀请码加入小组，并查看成员是否完成该小组目标。</p>
       </div>
 
       <el-button :loading="teamsLoading" @click="loadTeams">

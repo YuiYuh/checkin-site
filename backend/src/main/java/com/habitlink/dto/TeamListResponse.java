@@ -7,15 +7,21 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TeamCheckinTodayResponse {
+public class TeamListResponse {
 
-    private Long userId;
+    private Long id;
 
-    private String nickname;
+    private Long creatorId;
 
-    private Boolean checkedToday;
+    private String name;
+
+    private String description;
+
+    private String inviteCode;
 
     private Long goalId;
 
     private String goalTitle;
+
+    private Integer status;
 }

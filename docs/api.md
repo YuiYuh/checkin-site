@@ -105,7 +105,7 @@ Authorization: Bearer <token>
 
 ## 目标模块
 
-> Day 3 仅实现目标基础接口：创建、列表、详情、删除。MVP 阶段当前用户临时固定为 `userId=1`。
+> 目标接口根据 `Authorization: Bearer user-{id}` 解析当前用户。
 
 ### 创建目标
 
@@ -200,7 +200,7 @@ Authorization: Bearer <token>
 ### 查看目标统计
 
 - URL：`GET /api/goals/{goalId}/stats`
-- 说明：统计累计打卡天数和连续打卡天数。MVP 阶段当前用户临时固定为 `userId=1`。
+- 说明：统计当前用户在该目标上的累计打卡天数和连续打卡天数。
 
 响应数据：
 
@@ -400,7 +400,7 @@ Authorization: Bearer <token>
 ### 查看小组成员今日打卡状态
 
 - URL：`GET /api/teams/{teamId}/checkins/today`
-- 说明：查看小组成员今天是否完成打卡。MVP 阶段判断成员今天是否有任意 `checkin_record`。
+- 说明：查看小组成员今天是否完成该小组绑定目标。
 
 响应数据：
 
@@ -427,7 +427,7 @@ Authorization: Bearer <token>
 ### 退出小组
 
 - URL: `POST /api/teams/{teamId}/leave`
-- 说明: MVP 阶段当前用户固定为 `userId=1`。
+- 说明: 根据 `Authorization: Bearer user-{id}` 解析当前用户并退出小组。
 
 成功响应：
 
@@ -453,7 +453,7 @@ Authorization: Bearer <token>
 ### 转让组长
 
 - URL: `POST /api/teams/{teamId}/transfer-owner`
-- 说明: 只有当前小组 OWNER 可以转让组长。MVP 阶段当前用户固定为 `userId=1`。
+- 说明: 只有当前小组 OWNER 可以转让组长，当前用户从 Authorization 解析。
 
 请求体：
 
@@ -480,3 +480,125 @@ Authorization: Bearer <token>
 - `只有组长可以转让组长`
 - `新组长必须是小组成员`
 - `不能转让给自己`
+## 小组共同目标接口更新
+
+当前阶段采用简单方案：一个小组绑定一个共同目标。
+
+### 创建小组
+
+- URL: `POST /api/teams`
+- 说明: 创建小组时会自动创建一个共同目标，并写入 `team.goal_id`。
+
+请求体：
+
+```json
+{
+  "name": "四级打卡小组",
+  "description": "一起完成每日英语学习",
+  "goalTitle": "每天背 20 个单词",
+  "goalDescription": "小组共同目标",
+  "startDate": "2026-05-30",
+  "endDate": "2026-06-30"
+}
+```
+
+字段说明：
+
+- `goalTitle` 为空时使用 `name`
+- `goalDescription` 为空时使用 `description`
+- `startDate` 为空时使用当天日期
+- `endDate` 可以为空
+
+### 查看目标列表
+
+- URL: `GET /api/goals`
+- 说明: 返回当前用户个人目标，以及当前用户加入的小组绑定目标。
+
+响应中的小组目标会包含：
+
+```json
+{
+  "id": 10,
+  "title": "每天背 20 个单词",
+  "description": "小组共同目标",
+  "startDate": "2026-05-30",
+  "endDate": "2026-06-30",
+  "teamId": 3,
+  "teamName": "四级打卡小组",
+  "goalType": "TEAM"
+}
+```
+
+个人目标：
+
+```json
+{
+  "id": 1,
+  "title": "个人阅读",
+  "teamId": null,
+  "teamName": null,
+  "goalType": "PERSONAL"
+}
+```
+
+### 查看我的小组
+
+- URL: `GET /api/teams/my`
+- 说明: 返回当前用户加入的小组，并包含绑定目标信息。
+
+响应示例：
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": [
+    {
+      "id": 3,
+      "name": "四级打卡小组",
+      "description": "一起完成每日英语学习",
+      "inviteCode": "AB12CD",
+      "goalId": 10,
+      "goalTitle": "每天背 20 个单词"
+    }
+  ]
+}
+```
+
+### 小组成员今日状态
+
+- URL: `GET /api/teams/{teamId}/checkins/today`
+- 说明: 今日状态只判断成员是否完成该小组绑定目标，不再判断任意打卡。
+
+判断条件：
+
+```text
+checkin_record.user_id = member.user_id
+checkin_record.goal_id = team.goal_id
+checkin_record.checkin_date = 今天
+```
+
+响应示例：
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": [
+    {
+      "userId": 1,
+      "nickname": "小明",
+      "checkedToday": true,
+      "goalId": 10,
+      "goalTitle": "每天背 20 个单词"
+    },
+    {
+      "userId": 2,
+      "nickname": "小红",
+      "checkedToday": false,
+      "goalId": 10,
+      "goalTitle": "每天背 20 个单词"
+    }
+  ]
+}
+```

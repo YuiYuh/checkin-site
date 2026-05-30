@@ -40,6 +40,7 @@ const emit = defineEmits(['select', 'leave'])
         <span class="team-name">{{ team.name }}</span>
         <span class="team-description">{{ team.description || '暂无描述' }}</span>
         <span class="invite-code">邀请码：{{ team.inviteCode || '-' }}</span>
+        <span class="team-goal-name">绑定目标：{{ team.goalTitle || '未绑定目标' }}</span>
         <span class="team-item-actions">
           <el-button
             size="small"

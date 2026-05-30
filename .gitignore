@@ -6,3 +6,9 @@ target/
 .DS_Store
 *.log
 .env
+.env.local
+.env.*.local
+frontend/.env.local
+frontend/.env.*.local
+backend/src/main/resources/application-local.yml
+backend/src/main/resources/application-prod-local.yml
