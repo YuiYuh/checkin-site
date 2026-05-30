@@ -130,7 +130,7 @@ public class TeamServiceImpl implements TeamService {
     @Override
     @Transactional
     public String leaveTeam(Long teamId, Long currentUserId) {
-        validateTeamExists(teamId);
+        Team team = validateTeamExists(teamId);
 
         List<TeamMember> lockedMembers = teamMemberMapper.selectByTeamIdForUpdate(teamId);
         TeamMember currentMember = findMember(lockedMembers, currentUserId);
@@ -142,13 +142,21 @@ public class TeamServiceImpl implements TeamService {
             throw new IllegalArgumentException("组长不能直接退出，请先转让组长");
         }
 
-        teamMemberMapper.deleteById(currentMember.getId());
-
         if (OWNER_ROLE.equals(currentMember.getRole())) {
+            Long goalId = team.getGoalId();
+            if (goalId != null) {
+                checkinMapper.delete(new LambdaQueryWrapper<CheckinRecord>()
+                        .eq(CheckinRecord::getGoalId, goalId));
+            }
+            teamMemberMapper.deleteById(currentMember.getId());
             teamMapper.deleteById(teamId);
+            if (goalId != null) {
+                goalMapper.deleteById(goalId);
+            }
             return "已退出并删除空小组";
         }
 
+        teamMemberMapper.deleteById(currentMember.getId());
         return "退出小组成功";
     }
 

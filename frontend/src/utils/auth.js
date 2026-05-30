@@ -1,7 +1,6 @@
 const AUTH_EVENT = 'habitlink-auth-changed'
 
-export const DEFAULT_USER = { id: 1, username: 'demo', nickname: '演示用户' }
-export const DEFAULT_TOKEN = 'user-1'
+export const DEFAULT_USER = { id: 1, username: 'student01', nickname: '小明' }
 
 export const getToken = () => {
   return localStorage.getItem('token') || ''
@@ -19,9 +18,12 @@ export const isLoggedIn = () => {
   return Boolean(getToken() && getCurrentUser())
 }
 
-export const saveAuth = ({ token = DEFAULT_TOKEN, user = DEFAULT_USER } = {}) => {
-  localStorage.setItem('token', token || DEFAULT_TOKEN)
-  localStorage.setItem('user', JSON.stringify(user || DEFAULT_USER))
+export const saveAuth = ({ token, user } = {}) => {
+  if (!token || !user) {
+    throw new Error('登录信息不完整')
+  }
+  localStorage.setItem('token', token)
+  localStorage.setItem('user', JSON.stringify(user))
   window.dispatchEvent(new Event(AUTH_EVENT))
 }
 

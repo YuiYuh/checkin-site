@@ -24,35 +24,36 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GoalController {
 
+    private final AuthUtil authUtil;
     private final GoalService goalService;
 
     @PostMapping
     public Result<Goal> createGoal(@RequestBody GoalCreateRequest request,
                                    @RequestHeader(value = "Authorization", required = false) String authorization) {
-        return Result.success(goalService.createGoal(request, AuthUtil.parseUserId(authorization)));
+        return Result.success(goalService.createGoal(request, authUtil.parseUserId(authorization)));
     }
 
     @GetMapping
     public Result<List<GoalListResponse>> listGoals(@RequestHeader(value = "Authorization", required = false) String authorization) {
-        return Result.success(goalService.listGoals(AuthUtil.parseUserId(authorization)));
+        return Result.success(goalService.listGoals(authUtil.parseUserId(authorization)));
     }
 
     @GetMapping("/{goalId}")
     public Result<Goal> getGoal(@PathVariable Long goalId,
                                 @RequestHeader(value = "Authorization", required = false) String authorization) {
-        return Result.success(goalService.getGoal(goalId, AuthUtil.parseUserId(authorization)));
+        return Result.success(goalService.getGoal(goalId, authUtil.parseUserId(authorization)));
     }
 
     @GetMapping("/{goalId}/stats")
     public Result<GoalStatsResponse> getGoalStats(@PathVariable Long goalId,
                                                   @RequestHeader(value = "Authorization", required = false) String authorization) {
-        return Result.success(goalService.getGoalStats(goalId, AuthUtil.parseUserId(authorization)));
+        return Result.success(goalService.getGoalStats(goalId, authUtil.parseUserId(authorization)));
     }
 
     @DeleteMapping("/{goalId}")
     public Result<Void> deleteGoal(@PathVariable Long goalId,
                                    @RequestHeader(value = "Authorization", required = false) String authorization) {
-        goalService.deleteGoal(goalId, AuthUtil.parseUserId(authorization));
+        goalService.deleteGoal(goalId, authUtil.parseUserId(authorization));
         return Result.success();
     }
 }

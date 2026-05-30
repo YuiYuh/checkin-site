@@ -61,27 +61,27 @@ public class GoalServiceImpl implements GoalService {
     public List<GoalListResponse> listGoals(Long currentUserId) {
         Map<Long, GoalListResponse> merged = new LinkedHashMap<>();
 
-        List<Goal> personalGoals = goalMapper.selectList(new LambdaQueryWrapper<Goal>()
+        List<Goal> ownGoals = goalMapper.selectList(new LambdaQueryWrapper<Goal>()
                 .eq(Goal::getUserId, currentUserId)
                 .orderByDesc(Goal::getCreatedAt));
-        personalGoals.forEach(goal -> merged.put(goal.getId(), toGoalListResponse(goal, null, null, PERSONAL_GOAL)));
 
-        List<Team> teams = listJoinedTeams(currentUserId);
-        if (teams.isEmpty()) {
-            return new ArrayList<>(merged.values());
-        }
+        Set<Long> teamGoalIds = selectTeamGoalIdsByGoals(ownGoals);
+        ownGoals.stream()
+                .filter(goal -> !teamGoalIds.contains(goal.getId()))
+                .forEach(goal -> merged.put(goal.getId(), toGoalListResponse(goal, null, null, PERSONAL_GOAL)));
 
-        Map<Long, Team> teamByGoalId = teams.stream()
+        List<Team> joinedTeams = listJoinedTeams(currentUserId);
+        Map<Long, Team> joinedTeamByGoalId = joinedTeams.stream()
                 .filter(team -> team.getGoalId() != null)
                 .collect(Collectors.toMap(Team::getGoalId, Function.identity(), (left, right) -> left));
-        if (teamByGoalId.isEmpty()) {
+        if (joinedTeamByGoalId.isEmpty()) {
             return new ArrayList<>(merged.values());
         }
 
-        List<Goal> teamGoals = goalMapper.selectList(new LambdaQueryWrapper<Goal>()
-                .in(Goal::getId, teamByGoalId.keySet()));
-        for (Goal goal : teamGoals) {
-            Team team = teamByGoalId.get(goal.getId());
+        List<Goal> joinedTeamGoals = goalMapper.selectList(new LambdaQueryWrapper<Goal>()
+                .in(Goal::getId, joinedTeamByGoalId.keySet()));
+        for (Goal goal : joinedTeamGoals) {
+            Team team = joinedTeamByGoalId.get(goal.getId());
             merged.put(goal.getId(), toGoalListResponse(goal, team.getId(), team.getName(), TEAM_GOAL));
         }
 
@@ -165,6 +165,24 @@ public class GoalServiceImpl implements GoalService {
                 .in(Team::getId, teamIds));
     }
 
+    private Set<Long> selectTeamGoalIdsByGoals(List<Goal> goals) {
+        if (goals.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        List<Long> goalIds = goals.stream()
+                .map(Goal::getId)
+                .toList();
+        List<Team> teams = teamMapper.selectList(new LambdaQueryWrapper<Team>()
+                .select(Team::getGoalId)
+                .in(Team::getGoalId, goalIds));
+
+        return teams.stream()
+                .map(Team::getGoalId)
+                .filter(goalId -> goalId != null)
+                .collect(Collectors.toCollection(HashSet::new));
+    }
+
     private boolean isTeamGoal(Long goalId) {
         Long count = teamMapper.selectCount(new LambdaQueryWrapper<Team>()
                 .eq(Team::getGoalId, goalId));
@@ -182,7 +200,10 @@ public class GoalServiceImpl implements GoalService {
         if (goal == null) {
             throw new IllegalArgumentException("目标不存在");
         }
-        if (currentUserId.equals(goal.getUserId()) || canAccessTeamGoal(goalId, currentUserId)) {
+        if (currentUserId.equals(goal.getUserId()) && !isTeamGoal(goalId)) {
+            return goal;
+        }
+        if (canAccessTeamGoal(goalId, currentUserId)) {
             return goal;
         }
         throw new IllegalArgumentException("无权限访问该目标");

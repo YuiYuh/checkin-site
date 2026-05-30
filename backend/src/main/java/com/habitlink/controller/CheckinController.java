@@ -21,23 +21,24 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CheckinController {
 
+    private final AuthUtil authUtil;
     private final CheckinService checkinService;
 
     @PostMapping
     public Result<CheckinRecord> checkinToday(@RequestBody CheckinRequest request,
                                               @RequestHeader(value = "Authorization", required = false) String authorization) {
-        return Result.success(checkinService.checkinToday(request, AuthUtil.parseUserId(authorization)));
+        return Result.success(checkinService.checkinToday(request, authUtil.parseUserId(authorization)));
     }
 
     @GetMapping("/goal/{goalId}")
     public Result<List<CheckinRecord>> listGoalCheckins(@PathVariable Long goalId,
                                                         @RequestHeader(value = "Authorization", required = false) String authorization) {
-        return Result.success(checkinService.listGoalCheckins(goalId, AuthUtil.parseUserId(authorization)));
+        return Result.success(checkinService.listGoalCheckins(goalId, authUtil.parseUserId(authorization)));
     }
 
     @GetMapping("/today/{goalId}")
     public Result<Boolean> hasCheckedToday(@PathVariable Long goalId,
                                            @RequestHeader(value = "Authorization", required = false) String authorization) {
-        return Result.success(checkinService.hasCheckedToday(goalId, AuthUtil.parseUserId(authorization)));
+        return Result.success(checkinService.hasCheckedToday(goalId, authUtil.parseUserId(authorization)));
     }
 }

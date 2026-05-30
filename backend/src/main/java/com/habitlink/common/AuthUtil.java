@@ -1,24 +1,22 @@
 package com.habitlink.common;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-public final class AuthUtil {
+@Component
+@RequiredArgsConstructor
+public class AuthUtil {
 
-    private static final String TOKEN_PREFIX = "Bearer user-";
+    private static final String BEARER_PREFIX = "Bearer ";
 
-    private AuthUtil() {
-    }
+    private final TokenUtil tokenUtil;
 
-    public static Long parseUserId(String authorization) {
-        if (!StringUtils.hasText(authorization) || !authorization.startsWith(TOKEN_PREFIX)) {
+    public Long parseUserId(String authorization) {
+        if (!StringUtils.hasText(authorization) || !authorization.startsWith(BEARER_PREFIX)) {
             throw new IllegalArgumentException("请先登录");
         }
 
-        String userIdText = authorization.substring(TOKEN_PREFIX.length());
-        try {
-            return Long.valueOf(userIdText);
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("请先登录");
-        }
+        return tokenUtil.parseToken(authorization.substring(BEARER_PREFIX.length()));
     }
 }

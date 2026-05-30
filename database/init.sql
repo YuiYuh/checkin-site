@@ -6,8 +6,8 @@ USE habitlink;
 
 DROP TABLE IF EXISTS team_member;
 DROP TABLE IF EXISTS checkin_record;
-DROP TABLE IF EXISTS goal;
 DROP TABLE IF EXISTS team;
+DROP TABLE IF EXISTS goal;
 DROP TABLE IF EXISTS user;
 
 CREATE TABLE user (
@@ -67,6 +67,7 @@ CREATE TABLE team (
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   UNIQUE KEY uk_team_invite_code (invite_code),
   KEY idx_team_creator_id (creator_id),
+  KEY idx_team_goal_id (goal_id),
   CONSTRAINT fk_team_creator FOREIGN KEY (creator_id) REFERENCES user (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='小组表';
 
@@ -74,7 +75,7 @@ CREATE TABLE team_member (
   id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '小组成员ID',
   team_id BIGINT NOT NULL COMMENT '小组ID',
   user_id BIGINT NOT NULL COMMENT '用户ID',
-  role VARCHAR(20) NOT NULL DEFAULT 'member' COMMENT '角色：owner/member',
+  role VARCHAR(20) NOT NULL DEFAULT 'MEMBER' COMMENT '角色：OWNER/MEMBER',
   joined_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '加入时间',
   UNIQUE KEY uk_team_user (team_id, user_id),
   KEY idx_team_member_user_id (user_id),

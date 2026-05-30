@@ -1,66 +1,44 @@
 # HabitLink
 
-HabitLink 是一个课程演示用的目标打卡与小组协作 MVP。项目包含 Vue 3 前端、Spring Boot 后端和 MySQL 初始化脚本，当前定位是本地演示与部署准备，不代表已经完成生产级上线能力。
+HabitLink 是一个课程演示用的目标打卡与小组协作 MVP。项目包含 Vue 3 前端、Spring Boot 后端和 MySQL 初始化脚本，适合本地演示和部署前整理，不等同于完整生产级系统。
 
-当前登录态是 MVP 简化实现，token 格式为 `user-{id}`，不包含 JWT、密码加密、复杂权限和完整线上安全体系。
+当前登录态使用服务端签名 token，不使用 JWT。密码使用 BCrypt 哈希存储，并兼容旧的明文密码登录后自动升级。
 
 ## 技术栈
 
 - 前端：Vue 3、Vite、JavaScript、Vue Router、Element Plus、Axios
-- 后端：Spring Boot 3、MyBatis Plus、Maven
-- 数据库：MySQL
+- 后端：Spring Boot 3、Java 17、MyBatis Plus、Maven
+- 数据库：MySQL 8.x
 
 ## 功能模块
 
-### 用户
-
-- 用户注册
-- 用户登录
-- 获取当前登录用户
-- 前端保存登录态和退出登录
-- 前端路由保护
-
-### 目标与打卡
-
-- 创建个人目标
-- 查看目标列表
-- 删除个人目标
-- 今日打卡
-- 防止同一目标当天重复打卡
-- 查看目标今日是否已打卡
-- 查看累计打卡天数和连续打卡天数
-- 目标和打卡数据按当前登录用户隔离
-
-### 小组
-
-- 创建小组
-- 创建小组时自动创建一个小组共同目标
-- 小组绑定一个共同目标，字段为 `team.goal_id`
-- 通过邀请码加入小组
-- 加入小组后，成员可以在目标列表看到该小组共同目标
-- 小组成员对该共同目标打卡，才算完成小组任务
-- 查看我的小组
-- 查看小组成员
-- 查看成员今日是否完成小组目标
-- 退出小组
-- 组长转让
-- 组长作为最后一名成员退出时删除空小组
+- 用户注册、登录、获取当前用户、退出登录
+- 当前登录用户的数据隔离
+- 创建、查看、删除个人目标
+- 今日打卡、防重复打卡
+- 累计打卡天数和连续打卡天数统计
+- 创建小组，并自动创建一个小组共同目标
+- 邀请码加入小组
+- 小组成员可以在目标列表看到小组共同目标
+- 小组成员对共同目标打卡后，才算完成小组任务
+- 查看我的小组、小组成员、小组成员今日共同目标完成状态
+- 退出小组、转让组长
 
 ## 项目结构
 
 ```text
 HabitLink/
-├── backend/              # Spring Boot 后端项目
-├── frontend/             # Vue 3 + Vite 前端项目
-├── database/             # 数据库脚本
-│   ├── init.sql
-│   └── migrations/
-├── docs/                 # 项目文档
-│   ├── api.md
-│   ├── requirement.md
-│   └── tasks.md
-├── presentation/         # 课程展示材料
-└── README.md
+├─ backend/              # Spring Boot 后端项目
+├─ frontend/             # Vue 3 + Vite 前端项目
+├─ database/             # 数据库脚本
+│  ├─ init.sql
+│  └─ migrations/
+├─ docs/                 # 项目文档
+│  ├─ api.md
+│  ├─ requirement.md
+│  └─ tasks.md
+├─ presentation/         # 课程展示材料
+└─ README.md
 ```
 
 ## 环境要求
@@ -73,23 +51,17 @@ HabitLink/
 
 ## 数据库初始化
 
-初始化新数据库：
+新数据库初始化：
 
 ```bash
 mysql -u root -p < database/init.sql
 ```
 
-如果是已有数据库，需要补充小组绑定目标字段：
+已有数据库需要执行迁移脚本：
 
 ```bash
 mysql -u root -p < database/migrations/2026-05-30-add-team-goal-id.sql
-```
-
-后端数据库连接配置位于：
-
-```text
-backend/src/main/resources/application-dev.yml
-backend/src/main/resources/application-prod.yml
+mysql -u root -p < database/migrations/2026-05-30-add-team-goal-index.sql
 ```
 
 ## 后端启动
@@ -101,7 +73,7 @@ cd backend
 mvn spring-boot:run
 ```
 
-后端默认地址：
+默认地址：
 
 ```text
 http://localhost:8080
@@ -125,6 +97,18 @@ mvn clean package
 
 ```bash
 java -jar target/habitlink-backend-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod
+```
+
+生产环境需要提供环境变量：
+
+```text
+MYSQL_HOST
+MYSQL_PORT
+MYSQL_DATABASE
+MYSQL_USERNAME
+MYSQL_PASSWORD
+FRONTEND_ORIGIN
+HABITLINK_TOKEN_SECRET
 ```
 
 ## 前端启动
@@ -156,9 +140,7 @@ frontend/dist/
 
 ## 测试账号
 
-`database/init.sql` 只创建表结构，不内置测试账号。
-
-可以通过前端注册页面或接口创建演示账号，例如：
+`database/init.sql` 只创建表结构，不内置测试账号。可以通过注册接口创建演示账号：
 
 ```json
 {
@@ -168,8 +150,6 @@ frontend/dist/
 }
 ```
 
-再创建第二个账号用于小组演示：
-
 ```json
 {
   "username": "student02",
@@ -178,7 +158,7 @@ frontend/dist/
 }
 ```
 
-开发环境可以使用前端“使用默认用户”按钮。该按钮会写入 `token=user-1` 和默认用户信息，使用前需要数据库中存在 `id=1` 的用户。
+签名 token 启用后，前端“使用默认用户”按钮不再伪造登录态；请使用测试账号密码登录。
 
 ## 演示流程
 
@@ -194,20 +174,19 @@ frontend/dist/
 10. 使用邀请码加入小组。
 11. 在目标列表查看小组目标。
 12. 对小组目标打卡。
-13. 回到小组页面，查看成员今日是否完成小组目标。
+13. 回到小组页面查看成员今日是否完成小组目标。
 14. 演示组长转让、成员退出和空小组删除。
 
-## 生产环境注意事项
+## 部署准备
 
-当前项目还不是生产级系统。部署前至少需要处理：
+当前项目可以作为课程 MVP 演示，不建议不经加固直接面向公网开放。上线前至少需要：
 
-- 使用真实认证方案替换 MVP token，例如 JWT 或 Session。
-- 对密码进行加密存储。
 - 使用生产数据库账号，不使用 root。
-- 生产数据库密码通过环境变量提供，不写入 Git。
-- 前端 API 地址通过环境变量配置。
-- CORS 只允许正式前端域名。
-- 配置 HTTPS、日志、监控和备份。
+- 通过环境变量提供生产数据库密码和 `HABITLINK_TOKEN_SECRET`。
+- 生产 CORS 只允许正式前端域名。
+- 使用 HTTPS。
+- 配置日志、备份和基础监控。
+- 根据实际需求评估是否升级为 JWT、Session 或其他成熟认证方案。
 
 ## 后续扩展方向
 

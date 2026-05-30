@@ -3,7 +3,7 @@ import { reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import api from '../api'
-import { DEFAULT_TOKEN, DEFAULT_USER, saveAuth } from '../utils/auth'
+import { saveAuth } from '../utils/auth'
 
 const route = useRoute()
 const router = useRouter()
@@ -32,9 +32,14 @@ const login = async () => {
       password: form.password,
     })
 
+    if (!result?.token || !result?.user) {
+      ElMessage.error('登录响应缺少 token 或用户信息')
+      return
+    }
+
     saveAuth({
-      token: result?.token || DEFAULT_TOKEN,
-      user: result?.user || { id: 1, username: form.username.trim() },
+      token: result.token,
+      user: result.user,
     })
 
     ElMessage.success('登录成功')
@@ -47,12 +52,7 @@ const login = async () => {
 }
 
 const useDemo = () => {
-  saveAuth({
-    token: DEFAULT_TOKEN,
-    user: DEFAULT_USER,
-  })
-  ElMessage.success('已使用默认用户继续演示')
-  router.push('/goals')
+  ElMessage.warning('签名登录已启用，请使用测试账号密码登录')
 }
 </script>
 
@@ -62,7 +62,7 @@ const useDemo = () => {
       <div class="section-heading">
         <p class="eyebrow">HabitLink MVP</p>
         <h1>登录</h1>
-        <p>登录后进入目标和小组演示页面。也可以使用默认用户快速体验课程 MVP。</p>
+        <p>登录后进入目标和小组演示页面。</p>
       </div>
 
       <el-form class="login-form" label-position="top" @submit.prevent>

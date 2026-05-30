@@ -9,3 +9,8 @@ app:
   cors:
     allowed-origins:
       - ${FRONTEND_ORIGIN}
+
+habitlink:
+  token:
+    secret: ${HABITLINK_TOKEN_SECRET}
+    expire-days: ${HABITLINK_TOKEN_EXPIRE_DAYS:7}
