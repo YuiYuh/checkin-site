@@ -82,3 +82,12 @@ cd frontend
 - 当前 MVP 只实现用户、目标、打卡、小组四个核心模块
 - 微信小程序登录、排行榜、提醒通知和数据看板均不属于当前 MVP
 - 后续可在核心功能稳定后，再评估移动端适配、云服务器部署、HTTPS 和域名接入
+## Frontend MVP
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Vite 默认运行在 `http://localhost:5173`，后端接口地址为 `http://localhost:8080`。
