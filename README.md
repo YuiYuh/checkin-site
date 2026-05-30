@@ -38,6 +38,7 @@ HabitLink/
 │  └─ migrations/
 ├─ docs/                 # 项目文档
 │  ├─ api.md
+│  ├─ beta-test-guide.md
 │  ├─ deployment.md
 │  ├─ internal-test.md
 │  ├─ requirement.md
@@ -63,7 +64,7 @@ HabitLink/
 mysql -u root -p < database/init.sql
 ```
 
-已有数据库按需执行迁移脚本：
+已有数据库按需执行迁移脚本，建议按文件名时间顺序执行：
 
 ```bash
 mysql -u root -p < database/migrations/2026-05-30-add-team-goal-id.sql
@@ -204,7 +205,7 @@ frontend/dist/
 
 ## 测试账号
 
-通过注册接口或前端登录页创建演示账号：
+通过注册接口或前端页面创建演示账号：
 
 ```json
 {
@@ -259,6 +260,7 @@ frontend/dist/
 
 - API 文档：[docs/api.md](docs/api.md)
 - 部署说明：[docs/deployment.md](docs/deployment.md)
+- 内测指南：[docs/beta-test-guide.md](docs/beta-test-guide.md)
 - 内测说明：[docs/internal-test.md](docs/internal-test.md)
 - 测试用例：[docs/test-cases.md](docs/test-cases.md)
 

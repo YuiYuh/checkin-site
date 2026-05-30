@@ -17,14 +17,14 @@
 mysql -u root -p < database/init.sql
 ```
 
-已有环境按需执行迁移：
+已有环境按需执行迁移，建议按文件名时间顺序执行：
 
 ```bash
 mysql -u root -p < database/migrations/2026-05-30-add-team-goal-id.sql
 mysql -u root -p < database/migrations/2026-05-30-add-team-goal-index.sql
 ```
 
-建议生产环境使用独立数据库账号，不使用 root。
+生产环境建议使用独立数据库账号，不使用 root。
 
 ## 3. 后端生产配置
 
@@ -98,7 +98,7 @@ frontend/dist/
 
 ## 5. Nginx 反向代理示例
 
-以下配置仅作参考，需要替换域名和证书配置：
+以下配置仅作参考，需要替换域名、路径和证书配置：
 
 ```nginx
 server {
@@ -143,7 +143,7 @@ server {
 
 ## 7. 当前不包含
 
-- Docker 镜像和 compose 文件
+- Docker 镜像和 Compose 文件
 - CI/CD
 - 自动 HTTPS 证书签发
 - 数据库自动备份脚本
