@@ -91,3 +91,31 @@ npm run dev
 ```
 
 Vite 默认运行在 `http://localhost:5173`，后端接口地址为 `http://localhost:8080`。
+## 完整运行方式 / Full Run Guide
+
+### 数据库 / Database
+
+```bash
+mysql -u root -p < database/init.sql
+```
+
+确认 `backend/src/main/resources/application.yml` 中的 MySQL 用户名、密码、数据库名和端口与本地环境一致。
+
+### 后端 / Backend
+
+```bash
+cd backend
+mvn spring-boot:run
+```
+
+后端接口地址：`http://localhost:8080`。
+
+### 前端 / Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Vite 通常运行在 `http://localhost:5173`。如果端口被占用，可能会使用 `http://localhost:5174`。
