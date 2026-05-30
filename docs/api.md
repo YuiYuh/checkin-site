@@ -343,8 +343,12 @@ Authorization: Bearer <token>
   "code": 200,
   "message": "success",
   "data": {
-    "teamId": 1,
-    "name": "软工学习小组"
+    "id": 1,
+    "creatorId": 1,
+    "name": "软工学习小组",
+    "description": "一起完成课程学习和每日打卡",
+    "inviteCode": "AB12CD",
+    "status": 1
   }
 }
 ```
@@ -385,7 +389,9 @@ Authorization: Bearer <token>
   "data": [
     {
       "userId": 1,
-      "nickname": "小明"
+      "username": "student01",
+      "nickname": "小明",
+      "role": "OWNER"
     }
   ]
 }
@@ -394,7 +400,7 @@ Authorization: Bearer <token>
 ### 查看小组成员今日打卡状态
 
 - URL：`GET /api/teams/{teamId}/checkins/today`
-- 说明：查看小组成员今天是否完成打卡
+- 说明：查看小组成员今天是否完成打卡。MVP 阶段判断成员今天是否有任意 `checkin_record`。
 
 响应数据：
 
