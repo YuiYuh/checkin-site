@@ -4,15 +4,20 @@
 
 - 接口前缀：`/api`
 - 请求和响应默认使用 JSON。
-- 登录后后端返回签名 token，前端在需要登录的接口中携带：
+- 后端统一返回 `code`、`message`、`data`。
+- 除注册、登录外，其他业务接口都需要登录 token。
+
+请求头：
 
 ```text
 Authorization: Bearer <token>
 ```
 
-token 由服务端签名并校验，前端不需要解析。
+token 格式由服务端生成，当前为 `userId.expireAt.signature`。前端只保存和携带 token，不解析 token。
 
-## 统一响应格式
+## 统一响应
+
+成功：
 
 ```json
 {
@@ -22,14 +27,34 @@ token 由服务端签名并校验，前端不需要解析。
 }
 ```
 
-业务失败时 `code` 为非 200，`message` 返回具体错误，例如 `请先登录`、`无权限访问该目标`。
+失败：
+
+```json
+{
+  "code": 500,
+  "message": "请先登录",
+  "data": null
+}
+```
+
+常见鉴权错误：
+
+- `请先登录`
+- `登录状态无效`
+- `登录已过期，请重新登录`
+- `无权限访问该目标`
+
+前端遇到前三类登录状态错误或 HTTP 401 时，会清除本地登录态并跳转登录页。
 
 ## 用户模块
 
-### 用户注册
+### 注册
 
-- URL：`POST /api/user/register`
+- 方法：`POST`
+- 路径：`/api/user/register`
 - 说明：创建新用户，密码使用 BCrypt 哈希存储。
+
+请求：
 
 ```json
 {
@@ -39,10 +64,23 @@ token 由服务端签名并校验，前端不需要解析。
 }
 ```
 
-### 用户登录
+响应 data：
 
-- URL：`POST /api/user/login`
-- 说明：使用用户名和密码登录。旧的明文密码在登录成功后会自动升级为 BCrypt 哈希。
+```json
+{
+  "id": 1,
+  "username": "student01",
+  "nickname": "小明"
+}
+```
+
+### 登录
+
+- 方法：`POST`
+- 路径：`/api/user/login`
+- 说明：使用用户名和密码登录。旧明文密码在登录成功后会自动升级为 BCrypt 哈希。
+
+请求：
 
 ```json
 {
@@ -51,31 +89,33 @@ token 由服务端签名并校验，前端不需要解析。
 }
 ```
 
+响应 data：
+
 ```json
 {
-  "code": 200,
-  "message": "success",
-  "data": {
-    "token": "userId.expireAt.signature",
-    "user": {
-      "id": 1,
-      "username": "student01",
-      "nickname": "小明"
-    }
+  "token": "userId.expireAt.signature",
+  "user": {
+    "id": 1,
+    "username": "student01",
+    "nickname": "小明"
   }
 }
 ```
 
-### 当前用户
+### 获取当前用户
 
-- URL：`GET /api/user/me`
+- 方法：`GET`
+- 路径：`/api/user/me`
 - 说明：根据 Authorization 获取当前登录用户。
 
 ## 目标模块
 
 ### 创建个人目标
 
-- URL：`POST /api/goals`
+- 方法：`POST`
+- 路径：`/api/goals`
+
+请求：
 
 ```json
 {
@@ -88,40 +128,65 @@ token 由服务端签名并校验，前端不需要解析。
 
 ### 查看目标列表
 
-- URL：`GET /api/goals`
+- 方法：`GET`
+- 路径：`/api/goals`
 - 说明：返回当前用户创建的个人目标，以及当前用户加入的小组绑定目标。
 
-小组目标会包含：
+个人目标示例：
+
+```json
+{
+  "id": 1,
+  "userId": 1,
+  "title": "每天背单词",
+  "description": "每天完成 30 个单词复习",
+  "startDate": "2026-05-30",
+  "endDate": "2026-06-30",
+  "status": 1,
+  "teamId": null,
+  "teamName": null,
+  "goalType": "PERSONAL"
+}
+```
+
+小组目标示例：
 
 ```json
 {
   "id": 10,
+  "userId": 1,
   "title": "每天背 20 个单词",
   "description": "小组共同目标",
   "startDate": "2026-05-30",
   "endDate": "2026-06-30",
+  "status": 1,
   "teamId": 3,
   "teamName": "四级打卡小组",
   "goalType": "TEAM"
 }
 ```
 
-个人目标的 `goalType` 为 `PERSONAL`，`teamId` 和 `teamName` 为空。
+只有被 `team.goal_id` 引用的目标才是小组目标。
 
 ### 查看目标详情
 
-- URL：`GET /api/goals/{goalId}`
+- 方法：`GET`
+- 路径：`/api/goals/{goalId}`
 - 说明：只能查看自己有权限访问的目标。
 
 ### 删除目标
 
-- URL：`DELETE /api/goals/{goalId}`
-- 说明：只能删除当前用户创建的个人目标。小组目标不能直接删除。
+- 方法：`DELETE`
+- 路径：`/api/goals/{goalId}`
+- 说明：只能删除当前用户创建且没有被 `team.goal_id` 引用的个人目标。小组目标不能在目标页直接删除。
 
 ### 目标统计
 
-- URL：`GET /api/goals/{goalId}/stats`
+- 方法：`GET`
+- 路径：`/api/goals/{goalId}/stats`
 - 说明：统计当前用户在该目标上的累计打卡天数和连续打卡天数。
+
+响应 data：
 
 ```json
 {
@@ -135,8 +200,11 @@ token 由服务端签名并校验，前端不需要解析。
 
 ### 今日打卡
 
-- URL：`POST /api/checkins`
+- 方法：`POST`
+- 路径：`/api/checkins`
 - 说明：当前用户对有权限访问的目标完成今日打卡。
+
+请求：
 
 ```json
 {
@@ -145,22 +213,39 @@ token 由服务端签名并校验，前端不需要解析。
 }
 ```
 
+规则：
+
+- 同一用户、同一目标、同一天只能打卡一次。
+- 用户不能给无权访问的目标打卡。
+- 小组目标按 `team.goal_id` 判断。
+
 ### 查看目标打卡记录
 
-- URL：`GET /api/checkins/goal/{goalId}`
+- 方法：`GET`
+- 路径：`/api/checkins/goal/{goalId}`
 - 说明：只返回当前用户在该目标上的打卡记录。
 
 ### 今日是否打卡
 
-- URL：`GET /api/checkins/today/{goalId}`
+- 方法：`GET`
+- 路径：`/api/checkins/today/{goalId}`
 - 说明：判断当前用户今天是否已对该目标打卡。
+
+响应 data：
+
+```json
+true
+```
 
 ## 小组模块
 
 ### 创建小组
 
-- URL：`POST /api/teams`
+- 方法：`POST`
+- 路径：`/api/teams`
 - 说明：创建小组时自动创建一个小组共同目标，并写入 `team.goal_id`。
+
+请求：
 
 ```json
 {
@@ -182,7 +267,10 @@ token 由服务端签名并校验，前端不需要解析。
 
 ### 邀请码加入小组
 
-- URL：`POST /api/teams/join`
+- 方法：`POST`
+- 路径：`/api/teams/join`
+
+请求：
 
 ```json
 {
@@ -194,16 +282,30 @@ token 由服务端签名并校验，前端不需要解析。
 
 ### 查看我的小组
 
-- URL：`GET /api/teams/my`
+- 方法：`GET`
+- 路径：`/api/teams/my`
 - 说明：返回当前用户加入的小组，并包含绑定目标信息。
 
 ### 查看小组成员
 
-- URL：`GET /api/teams/{teamId}/members`
+- 方法：`GET`
+- 路径：`/api/teams/{teamId}/members`
+
+响应项：
+
+```json
+{
+  "userId": 1,
+  "username": "student01",
+  "nickname": "小明",
+  "role": "OWNER"
+}
+```
 
 ### 小组成员今日状态
 
-- URL：`GET /api/teams/{teamId}/checkins/today`
+- 方法：`GET`
+- 路径：`/api/teams/{teamId}/checkins/today`
 - 说明：只判断成员是否完成该小组绑定目标，不判断任意打卡。
 
 判断条件：
@@ -214,7 +316,7 @@ checkin_record.goal_id = team.goal_id
 checkin_record.checkin_date = 今天
 ```
 
-响应项包含：
+响应项：
 
 ```json
 {
@@ -228,7 +330,8 @@ checkin_record.checkin_date = 今天
 
 ### 退出小组
 
-- URL：`POST /api/teams/{teamId}/leave`
+- 方法：`POST`
+- 路径：`/api/teams/{teamId}/leave`
 
 规则：
 
@@ -238,7 +341,10 @@ checkin_record.checkin_date = 今天
 
 ### 转让组长
 
-- URL：`POST /api/teams/{teamId}/transfer-owner`
+- 方法：`POST`
+- 路径：`/api/teams/{teamId}/transfer-owner`
+
+请求：
 
 ```json
 {
@@ -248,7 +354,7 @@ checkin_record.checkin_date = 今天
 
 规则：
 
-- 只有当前小组 OWNER 可以转让组长
-- 新组长必须是当前小组成员
-- 不能转让给自己
-- 成功后返回 `组长转让成功`
+- 只有当前小组 OWNER 可以转让组长。
+- 新组长必须是当前小组成员。
+- 不能转让给自己。
+- 成功后返回 `组长转让成功`。
