@@ -75,7 +75,7 @@ CREATE TABLE team_member (
   user_id BIGINT NOT NULL COMMENT '用户ID',
   role VARCHAR(20) NOT NULL DEFAULT 'member' COMMENT '角色：owner/member',
   joined_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '加入时间',
-  UNIQUE KEY uk_team_member (team_id, user_id),
+  UNIQUE KEY uk_team_user (team_id, user_id),
   KEY idx_team_member_user_id (user_id),
   CONSTRAINT fk_team_member_team FOREIGN KEY (team_id) REFERENCES team (id),
   CONSTRAINT fk_team_member_user FOREIGN KEY (user_id) REFERENCES user (id)

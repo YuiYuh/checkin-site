@@ -22,18 +22,17 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class GoalServiceImpl implements GoalService {
 
-    private static final Long CURRENT_USER_ID = 1L;
     private static final Integer DEFAULT_STATUS = 1;
 
     private final GoalMapper goalMapper;
     private final CheckinMapper checkinMapper;
 
     @Override
-    public Goal createGoal(GoalCreateRequest request) {
+    public Goal createGoal(GoalCreateRequest request, Long currentUserId) {
         validateCreateRequest(request);
 
         Goal goal = new Goal();
-        goal.setUserId(CURRENT_USER_ID);
+        goal.setUserId(currentUserId);
         goal.setTitle(request.getTitle());
         goal.setDescription(request.getDescription());
         goal.setStartDate(request.getStartDate());
@@ -45,35 +44,30 @@ public class GoalServiceImpl implements GoalService {
     }
 
     @Override
-    public List<Goal> listGoals() {
+    public List<Goal> listGoals(Long currentUserId) {
         return goalMapper.selectList(new LambdaQueryWrapper<Goal>()
-                .eq(Goal::getUserId, CURRENT_USER_ID)
+                .eq(Goal::getUserId, currentUserId)
                 .orderByDesc(Goal::getCreatedAt));
     }
 
     @Override
-    public Goal getGoal(Long goalId) {
+    public Goal getGoal(Long goalId, Long currentUserId) {
         validateGoalId(goalId);
-
-        Goal goal = goalMapper.selectById(goalId);
-        if (goal == null) {
-            throw new IllegalArgumentException("目标不存在");
-        }
-        return goal;
+        return getAccessibleGoal(goalId, currentUserId);
     }
 
     @Override
-    public GoalStatsResponse getGoalStats(Long goalId) {
+    public GoalStatsResponse getGoalStats(Long goalId, Long currentUserId) {
         validateGoalId(goalId);
-        checkGoalAccessible(goalId);
+        getAccessibleGoal(goalId, currentUserId);
 
         Long totalDays = checkinMapper.selectCount(new LambdaQueryWrapper<CheckinRecord>()
-                .eq(CheckinRecord::getUserId, CURRENT_USER_ID)
+                .eq(CheckinRecord::getUserId, currentUserId)
                 .eq(CheckinRecord::getGoalId, goalId));
 
         List<CheckinRecord> records = checkinMapper.selectList(new LambdaQueryWrapper<CheckinRecord>()
                 .select(CheckinRecord::getCheckinDate)
-                .eq(CheckinRecord::getUserId, CURRENT_USER_ID)
+                .eq(CheckinRecord::getUserId, currentUserId)
                 .eq(CheckinRecord::getGoalId, goalId));
 
         Set<LocalDate> checkinDates = records.stream()
@@ -88,8 +82,11 @@ public class GoalServiceImpl implements GoalService {
     }
 
     @Override
-    public void deleteGoal(Long goalId) {
+    public void deleteGoal(Long goalId, Long currentUserId) {
         validateGoalId(goalId);
+        getAccessibleGoal(goalId, currentUserId);
+        checkinMapper.delete(new LambdaQueryWrapper<CheckinRecord>()
+                .eq(CheckinRecord::getGoalId, goalId));
         goalMapper.deleteById(goalId);
     }
 
@@ -99,14 +96,12 @@ public class GoalServiceImpl implements GoalService {
         }
     }
 
-    private void checkGoalAccessible(Long goalId) {
+    private Goal getAccessibleGoal(Long goalId, Long currentUserId) {
         Goal goal = goalMapper.selectById(goalId);
-        if (goal == null) {
+        if (goal == null || !currentUserId.equals(goal.getUserId())) {
             throw new IllegalArgumentException("目标不存在");
         }
-        if (!CURRENT_USER_ID.equals(goal.getUserId())) {
-            throw new IllegalArgumentException("无权限访问该目标");
-        }
+        return goal;
     }
 
     private int calculateContinuousDays(Set<LocalDate> checkinDates) {

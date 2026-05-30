@@ -8,13 +8,13 @@ import java.util.List;
 
 public interface GoalService {
 
-    Goal createGoal(GoalCreateRequest request);
+    Goal createGoal(GoalCreateRequest request, Long currentUserId);
 
-    List<Goal> listGoals();
+    List<Goal> listGoals(Long currentUserId);
 
-    Goal getGoal(Long goalId);
+    Goal getGoal(Long goalId, Long currentUserId);
 
-    GoalStatsResponse getGoalStats(Long goalId);
+    GoalStatsResponse getGoalStats(Long goalId, Long currentUserId);
 
-    void deleteGoal(Long goalId);
+    void deleteGoal(Long goalId, Long currentUserId);
 }

@@ -1,6 +1,7 @@
 package com.habitlink.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.habitlink.common.AuthUtil;
 import com.habitlink.dto.UserLoginRequest;
 import com.habitlink.dto.UserRegisterRequest;
 import com.habitlink.entity.User;
@@ -54,7 +55,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserVO getCurrentUser(String authorization) {
-        Long userId = parseUserIdFromAuthorization(authorization);
+        Long userId = AuthUtil.parseUserId(authorization);
         User user = userMapper.selectById(userId);
         if (user == null) {
             throw new IllegalArgumentException("用户不存在");
@@ -71,18 +72,6 @@ public class UserServiceImpl implements UserService {
     private void validateLoginRequest(UserLoginRequest request) {
         if (request == null || !StringUtils.hasText(request.getUsername()) || !StringUtils.hasText(request.getPassword())) {
             throw new IllegalArgumentException("用户名和密码不能为空");
-        }
-    }
-
-    private Long parseUserIdFromAuthorization(String authorization) {
-        if (!StringUtils.hasText(authorization) || !authorization.startsWith("Bearer user-")) {
-            throw new IllegalArgumentException("请先登录");
-        }
-        String userIdText = authorization.substring("Bearer user-".length());
-        try {
-            return Long.valueOf(userIdText);
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("无效的登录凭证");
         }
     }
 }

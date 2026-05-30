@@ -5,6 +5,7 @@ import com.habitlink.dto.TeamCheckinTodayResponse;
 import com.habitlink.dto.TeamCreateRequest;
 import com.habitlink.dto.TeamJoinRequest;
 import com.habitlink.dto.TeamMemberResponse;
+import com.habitlink.dto.TeamTransferOwnerRequest;
 import com.habitlink.entity.CheckinRecord;
 import com.habitlink.entity.Team;
 import com.habitlink.entity.TeamMember;
@@ -34,7 +35,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TeamServiceImpl implements TeamService {
 
-    private static final Long CURRENT_USER_ID = 1L;
     private static final Integer DEFAULT_STATUS = 1;
     private static final String OWNER_ROLE = "OWNER";
     private static final String MEMBER_ROLE = "MEMBER";
@@ -49,13 +49,13 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     @Transactional
-    public Team createTeam(TeamCreateRequest request) {
+    public Team createTeam(TeamCreateRequest request, Long currentUserId) {
         if (request == null || !StringUtils.hasText(request.getName())) {
             throw new IllegalArgumentException("小组名称不能为空");
         }
 
         Team team = new Team();
-        team.setCreatorId(CURRENT_USER_ID);
+        team.setCreatorId(currentUserId);
         team.setName(request.getName());
         team.setDescription(request.getDescription());
         team.setInviteCode(generateUniqueInviteCode());
@@ -64,7 +64,7 @@ public class TeamServiceImpl implements TeamService {
 
         TeamMember owner = new TeamMember();
         owner.setTeamId(team.getId());
-        owner.setUserId(CURRENT_USER_ID);
+        owner.setUserId(currentUserId);
         owner.setRole(OWNER_ROLE);
         teamMemberMapper.insert(owner);
 
@@ -72,7 +72,8 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    public Team joinTeam(TeamJoinRequest request) {
+    @Transactional
+    public Team joinTeam(TeamJoinRequest request, Long currentUserId) {
         if (request == null || !StringUtils.hasText(request.getInviteCode())) {
             throw new IllegalArgumentException("邀请码不能为空");
         }
@@ -83,13 +84,16 @@ public class TeamServiceImpl implements TeamService {
             throw new IllegalArgumentException("小组不存在");
         }
 
-        if (existsMember(team.getId(), CURRENT_USER_ID)) {
+        List<TeamMember> lockedMembers = teamMemberMapper.selectByTeamIdForUpdate(team.getId());
+        validateTeamExists(team.getId());
+
+        if (findMember(lockedMembers, currentUserId) != null) {
             throw new IllegalArgumentException("已加入该小组");
         }
 
         TeamMember member = new TeamMember();
         member.setTeamId(team.getId());
-        member.setUserId(CURRENT_USER_ID);
+        member.setUserId(currentUserId);
         member.setRole(MEMBER_ROLE);
         try {
             teamMemberMapper.insert(member);
@@ -101,9 +105,69 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    public List<Team> listMyTeams() {
+    @Transactional
+    public String leaveTeam(Long teamId, Long currentUserId) {
+        validateTeamExists(teamId);
+
+        List<TeamMember> lockedMembers = teamMemberMapper.selectByTeamIdForUpdate(teamId);
+        TeamMember currentMember = findMember(lockedMembers, currentUserId);
+        if (currentMember == null) {
+            throw new IllegalArgumentException("未加入该小组");
+        }
+
+        if (OWNER_ROLE.equals(currentMember.getRole()) && lockedMembers.size() > 1) {
+            throw new IllegalArgumentException("组长不能直接退出，请先转让组长");
+        }
+
+        teamMemberMapper.deleteById(currentMember.getId());
+
+        if (OWNER_ROLE.equals(currentMember.getRole())) {
+            teamMapper.deleteById(teamId);
+            return "已退出并删除空小组";
+        }
+
+        return "退出小组成功";
+    }
+
+    @Override
+    @Transactional
+    public String transferOwner(Long teamId, TeamTransferOwnerRequest request, Long currentUserId) {
+        validateTeamExists(teamId);
+        if (request == null || request.getNewOwnerUserId() == null) {
+            throw new IllegalArgumentException("新组长ID不能为空");
+        }
+
+        Long newOwnerUserId = request.getNewOwnerUserId();
+        if (currentUserId.equals(newOwnerUserId)) {
+            throw new IllegalArgumentException("不能转让给自己");
+        }
+
+        List<TeamMember> lockedMembers = teamMemberMapper.selectByTeamIdForUpdate(teamId);
+        TeamMember currentMember = findMember(lockedMembers, currentUserId);
+        if (currentMember == null) {
+            throw new IllegalArgumentException("未加入该小组");
+        }
+        if (!OWNER_ROLE.equals(currentMember.getRole())) {
+            throw new IllegalArgumentException("只有组长可以转让组长");
+        }
+
+        TeamMember newOwner = findMember(lockedMembers, newOwnerUserId);
+        if (newOwner == null) {
+            throw new IllegalArgumentException("新组长必须是小组成员");
+        }
+
+        currentMember.setRole(MEMBER_ROLE);
+        newOwner.setRole(OWNER_ROLE);
+        teamMemberMapper.updateById(currentMember);
+        teamMemberMapper.updateById(newOwner);
+
+        return "组长转让成功";
+    }
+
+    @Override
+    public List<Team> listMyTeams(Long currentUserId) {
         List<TeamMember> memberships = teamMemberMapper.selectList(new LambdaQueryWrapper<TeamMember>()
-                .eq(TeamMember::getUserId, CURRENT_USER_ID)
+                .eq(TeamMember::getUserId, currentUserId)
                 .orderByDesc(TeamMember::getJoinedAt));
         if (memberships.isEmpty()) {
             return Collections.emptyList();
@@ -117,8 +181,9 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    public List<TeamMemberResponse> listMembers(Long teamId) {
+    public List<TeamMemberResponse> listMembers(Long teamId, Long currentUserId) {
         validateTeamExists(teamId);
+        checkCurrentUserInTeam(teamId, currentUserId);
 
         List<TeamMember> members = listTeamMembers(teamId);
         if (members.isEmpty()) {
@@ -140,8 +205,9 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    public List<TeamCheckinTodayResponse> listTodayCheckins(Long teamId) {
+    public List<TeamCheckinTodayResponse> listTodayCheckins(Long teamId, Long currentUserId) {
         validateTeamExists(teamId);
+        checkCurrentUserInTeam(teamId, currentUserId);
 
         List<TeamMember> members = listTeamMembers(teamId);
         if (members.isEmpty()) {
@@ -193,6 +259,19 @@ public class TeamServiceImpl implements TeamService {
         validateTeamId(teamId);
         if (teamMapper.selectById(teamId) == null) {
             throw new IllegalArgumentException("小组不存在");
+        }
+    }
+
+    private TeamMember findMember(List<TeamMember> members, Long userId) {
+        return members.stream()
+                .filter(member -> userId.equals(member.getUserId()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private void checkCurrentUserInTeam(Long teamId, Long currentUserId) {
+        if (!existsMember(teamId, currentUserId)) {
+            throw new IllegalArgumentException("未加入该小组");
         }
     }
 

@@ -18,27 +18,25 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CheckinServiceImpl implements CheckinService {
 
-    private static final Long CURRENT_USER_ID = 1L;
-
     private final CheckinMapper checkinMapper;
     private final GoalMapper goalMapper;
 
     @Override
-    public CheckinRecord checkinToday(CheckinRequest request) {
+    public CheckinRecord checkinToday(CheckinRequest request, Long currentUserId) {
         if (request == null || request.getGoalId() == null) {
             throw new IllegalArgumentException("目标ID不能为空");
         }
 
         Long goalId = request.getGoalId();
         LocalDate today = LocalDate.now();
-        checkGoalBelongsToCurrentUser(goalId);
+        checkGoalBelongsToCurrentUser(goalId, currentUserId);
 
-        if (existsCheckin(goalId, today)) {
+        if (existsCheckin(goalId, today, currentUserId)) {
             throw new IllegalArgumentException("今日已打卡");
         }
 
         CheckinRecord record = new CheckinRecord();
-        record.setUserId(CURRENT_USER_ID);
+        record.setUserId(currentUserId);
         record.setGoalId(goalId);
         record.setCheckinDate(today);
         record.setContent(request.getContent());
@@ -53,22 +51,22 @@ public class CheckinServiceImpl implements CheckinService {
     }
 
     @Override
-    public List<CheckinRecord> listGoalCheckins(Long goalId) {
+    public List<CheckinRecord> listGoalCheckins(Long goalId, Long currentUserId) {
         validateGoalId(goalId);
-        checkGoalBelongsToCurrentUser(goalId);
+        checkGoalBelongsToCurrentUser(goalId, currentUserId);
 
         return checkinMapper.selectList(new LambdaQueryWrapper<CheckinRecord>()
-                .eq(CheckinRecord::getUserId, CURRENT_USER_ID)
+                .eq(CheckinRecord::getUserId, currentUserId)
                 .eq(CheckinRecord::getGoalId, goalId)
                 .orderByDesc(CheckinRecord::getCheckinDate)
                 .orderByDesc(CheckinRecord::getCreatedAt));
     }
 
     @Override
-    public Boolean hasCheckedToday(Long goalId) {
+    public Boolean hasCheckedToday(Long goalId, Long currentUserId) {
         validateGoalId(goalId);
-        checkGoalBelongsToCurrentUser(goalId);
-        return existsCheckin(goalId, LocalDate.now());
+        checkGoalBelongsToCurrentUser(goalId, currentUserId);
+        return existsCheckin(goalId, LocalDate.now(), currentUserId);
     }
 
     private void validateGoalId(Long goalId) {
@@ -77,18 +75,18 @@ public class CheckinServiceImpl implements CheckinService {
         }
     }
 
-    private void checkGoalBelongsToCurrentUser(Long goalId) {
+    private void checkGoalBelongsToCurrentUser(Long goalId, Long currentUserId) {
         Goal goal = goalMapper.selectOne(new LambdaQueryWrapper<Goal>()
                 .eq(Goal::getId, goalId)
-                .eq(Goal::getUserId, CURRENT_USER_ID));
+                .eq(Goal::getUserId, currentUserId));
         if (goal == null) {
             throw new IllegalArgumentException("目标不存在");
         }
     }
 
-    private boolean existsCheckin(Long goalId, LocalDate checkinDate) {
+    private boolean existsCheckin(Long goalId, LocalDate checkinDate, Long currentUserId) {
         Long count = checkinMapper.selectCount(new LambdaQueryWrapper<CheckinRecord>()
-                .eq(CheckinRecord::getUserId, CURRENT_USER_ID)
+                .eq(CheckinRecord::getUserId, currentUserId)
                 .eq(CheckinRecord::getGoalId, goalId)
                 .eq(CheckinRecord::getCheckinDate, checkinDate));
         return count != null && count > 0;

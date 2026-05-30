@@ -8,9 +8,13 @@ const props = defineProps({
     type: Number,
     default: null,
   },
+  leavingTeamId: {
+    type: Number,
+    default: null,
+  },
 })
 
-const emit = defineEmits(['select'])
+const emit = defineEmits(['select', 'leave'])
 </script>
 
 <template>
@@ -30,11 +34,24 @@ const emit = defineEmits(['select'])
         class="team-list-item"
         :class="{ active: team.id === props.selectedTeamId }"
         type="button"
+        :disabled="props.leavingTeamId !== null"
         @click="emit('select', team)"
       >
         <span class="team-name">{{ team.name }}</span>
         <span class="team-description">{{ team.description || '暂无描述' }}</span>
         <span class="invite-code">邀请码：{{ team.inviteCode || '-' }}</span>
+        <span class="team-item-actions">
+          <el-button
+            size="small"
+            type="danger"
+            plain
+            :disabled="props.leavingTeamId !== null"
+            :loading="props.leavingTeamId === team.id"
+            @click.stop="emit('leave', team)"
+          >
+            退出小组
+          </el-button>
+        </span>
       </button>
     </div>
   </el-card>

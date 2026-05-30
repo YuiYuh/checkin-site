@@ -4,19 +4,24 @@ import com.habitlink.dto.TeamCheckinTodayResponse;
 import com.habitlink.dto.TeamCreateRequest;
 import com.habitlink.dto.TeamJoinRequest;
 import com.habitlink.dto.TeamMemberResponse;
+import com.habitlink.dto.TeamTransferOwnerRequest;
 import com.habitlink.entity.Team;
 
 import java.util.List;
 
 public interface TeamService {
 
-    Team createTeam(TeamCreateRequest request);
+    Team createTeam(TeamCreateRequest request, Long currentUserId);
 
-    Team joinTeam(TeamJoinRequest request);
+    Team joinTeam(TeamJoinRequest request, Long currentUserId);
 
-    List<Team> listMyTeams();
+    String leaveTeam(Long teamId, Long currentUserId);
 
-    List<TeamMemberResponse> listMembers(Long teamId);
+    String transferOwner(Long teamId, TeamTransferOwnerRequest request, Long currentUserId);
 
-    List<TeamCheckinTodayResponse> listTodayCheckins(Long teamId);
+    List<Team> listMyTeams(Long currentUserId);
+
+    List<TeamMemberResponse> listMembers(Long teamId, Long currentUserId);
+
+    List<TeamCheckinTodayResponse> listTodayCheckins(Long teamId, Long currentUserId);
 }

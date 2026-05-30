@@ -422,3 +422,61 @@ Authorization: Bearer <token>
   ]
 }
 ```
+## Day 9 小组管理接口补充
+
+### 退出小组
+
+- URL: `POST /api/teams/{teamId}/leave`
+- 说明: MVP 阶段当前用户固定为 `userId=1`。
+
+成功响应：
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": "退出小组成功"
+}
+```
+
+其他成功信息：
+
+- 普通成员退出：`退出小组成功`
+- 组长且最后一人退出：`已退出并删除空小组`
+
+失败信息：
+
+- `小组不存在`
+- `未加入该小组`
+- `组长不能直接退出，请先转让组长`
+
+### 转让组长
+
+- URL: `POST /api/teams/{teamId}/transfer-owner`
+- 说明: 只有当前小组 OWNER 可以转让组长。MVP 阶段当前用户固定为 `userId=1`。
+
+请求体：
+
+```json
+{
+  "newOwnerUserId": 2
+}
+```
+
+成功响应：
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": "组长转让成功"
+}
+```
+
+失败信息：
+
+- `小组不存在`
+- `未加入该小组`
+- `只有组长可以转让组长`
+- `新组长必须是小组成员`
+- `不能转让给自己`

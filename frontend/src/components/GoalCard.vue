@@ -16,9 +16,13 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  deleting: {
+    type: Boolean,
+    default: false,
+  },
 })
 
-const emit = defineEmits(['checkin'])
+const emit = defineEmits(['checkin', 'delete'])
 </script>
 
 <template>
@@ -52,14 +56,23 @@ const emit = defineEmits(['checkin'])
       </div>
     </div>
 
-    <el-button
-      class="checkin-button"
-      type="primary"
-      :disabled="props.checkedToday"
-      :loading="props.loading"
-      @click="emit('checkin', props.goal)"
-    >
-      {{ props.checkedToday ? '今日已打卡' : '今日打卡' }}
-    </el-button>
+    <div class="goal-actions">
+      <el-button
+        type="primary"
+        :disabled="props.checkedToday"
+        :loading="props.loading"
+        @click="emit('checkin', props.goal)"
+      >
+        {{ props.checkedToday ? '今日已打卡' : '今日打卡' }}
+      </el-button>
+      <el-button
+        type="danger"
+        plain
+        :loading="props.deleting"
+        @click="emit('delete', props.goal)"
+      >
+        删除目标
+      </el-button>
+    </div>
   </el-card>
 </template>

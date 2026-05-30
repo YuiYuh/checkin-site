@@ -7,9 +7,9 @@ import java.util.List;
 
 public interface CheckinService {
 
-    CheckinRecord checkinToday(CheckinRequest request);
+    CheckinRecord checkinToday(CheckinRequest request, Long currentUserId);
 
-    List<CheckinRecord> listGoalCheckins(Long goalId);
+    List<CheckinRecord> listGoalCheckins(Long goalId, Long currentUserId);
 
-    Boolean hasCheckedToday(Long goalId);
+    Boolean hasCheckedToday(Long goalId, Long currentUserId);
 }

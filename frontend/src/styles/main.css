@@ -278,8 +278,14 @@ p {
   font-size: 28px;
 }
 
-.checkin-button {
-  width: 100%;
+.goal-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.goal-actions .el-button {
+  margin-left: 0;
 }
 
 .team-actions-grid {
@@ -353,6 +359,11 @@ p {
   font-weight: 600;
 }
 
+.team-item-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .team-members-header p {
   margin-top: 6px;
   color: #6b7280;
@@ -407,7 +418,8 @@ p {
   }
 
   .form-grid,
-  .stats-grid {
+  .stats-grid,
+  .goal-actions {
     grid-template-columns: 1fr;
   }
 

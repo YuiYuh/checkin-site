@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '../api'
 import GoalCard from '../components/GoalCard.vue'
 import GoalForm from '../components/GoalForm.vue'
@@ -8,6 +8,7 @@ import GoalForm from '../components/GoalForm.vue'
 const goals = ref([])
 const pageLoading = ref(false)
 const checkinLoading = reactive({})
+const deleteLoading = reactive({})
 const goalStats = reactive({})
 const todayStatus = reactive({})
 
@@ -61,6 +62,33 @@ const checkinToday = async (goal) => {
   }
 }
 
+const deleteGoal = async (goal) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定删除目标“${goal.title}”吗？该目标的打卡记录也会一起删除。`,
+      '删除目标',
+      {
+        confirmButtonText: '删除',
+        cancelButtonText: '取消',
+        type: 'warning',
+      },
+    )
+  } catch {
+    return
+  }
+
+  deleteLoading[goal.id] = true
+  try {
+    await api.delete(`/api/goals/${goal.id}`)
+    ElMessage.success('目标删除成功')
+    await loadGoals()
+  } catch (error) {
+    ElMessage.error(error.message || '删除目标失败')
+  } finally {
+    deleteLoading[goal.id] = false
+  }
+}
+
 onMounted(loadGoals)
 </script>
 
@@ -91,7 +119,9 @@ onMounted(loadGoals)
           :stats="goalStats[goal.id]"
           :checked-today="todayStatus[goal.id]"
           :loading="checkinLoading[goal.id]"
+          :deleting="deleteLoading[goal.id]"
           @checkin="checkinToday"
+          @delete="deleteGoal"
         />
       </div>
     </div>
