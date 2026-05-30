@@ -197,10 +197,10 @@ Authorization: Bearer <token>
 }
 ```
 
-### 查看目标统计（暂未实现）
+### 查看目标统计
 
 - URL：`GET /api/goals/{goalId}/stats`
-- 说明：统计累计打卡天数和连续打卡天数
+- 说明：统计累计打卡天数和连续打卡天数。MVP 阶段当前用户临时固定为 `userId=1`。
 
 响应数据：
 

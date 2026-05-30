@@ -2,6 +2,7 @@ package com.habitlink.controller;
 
 import com.habitlink.common.Result;
 import com.habitlink.dto.GoalCreateRequest;
+import com.habitlink.dto.GoalStatsResponse;
 import com.habitlink.entity.Goal;
 import com.habitlink.service.GoalService;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,11 @@ public class GoalController {
     @GetMapping("/{goalId}")
     public Result<Goal> getGoal(@PathVariable Long goalId) {
         return Result.success(goalService.getGoal(goalId));
+    }
+
+    @GetMapping("/{goalId}/stats")
+    public Result<GoalStatsResponse> getGoalStats(@PathVariable Long goalId) {
+        return Result.success(goalService.getGoalStats(goalId));
     }
 
     @DeleteMapping("/{goalId}")
