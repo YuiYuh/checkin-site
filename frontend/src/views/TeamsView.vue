@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import api from '../api'
+import api, { getTeams } from '../api'
 import { getCurrentUser } from '../utils/auth'
 import TeamForm from '../components/TeamForm.vue'
 import TeamJoinForm from '../components/TeamJoinForm.vue'
@@ -16,6 +16,8 @@ const teamsLoading = ref(false)
 const detailLoading = ref(false)
 const leavingTeamId = ref(null)
 const transferringUserId = ref(null)
+const showJoinPanel = ref(false)
+const showTeamList = ref(false)
 
 const currentUserId = computed(() => getCurrentUser()?.id || 1)
 
@@ -55,7 +57,7 @@ const loadTeamDetail = async (team) => {
 const loadTeams = async ({ keepSelection = true } = {}) => {
   teamsLoading.value = true
   try {
-    const result = await api.get('/api/teams/my')
+    const result = await getTeams()
     teams.value = Array.isArray(result) ? result : []
 
     if (!keepSelection || teams.value.length === 0) {
@@ -63,9 +65,14 @@ const loadTeams = async ({ keepSelection = true } = {}) => {
       return
     }
 
-    const nextTeam =
-      teams.value.find((team) => team.id === selectedTeamId.value) || teams.value[0]
-    await loadTeamDetail(nextTeam)
+    if (selectedTeamId.value) {
+      const nextTeam = teams.value.find((team) => team.id === selectedTeamId.value)
+      if (nextTeam) {
+        await loadTeamDetail(nextTeam)
+      } else {
+        clearTeamDetail()
+      }
+    }
   } catch (error) {
     ElMessage.error(error.message || '加载我的小组失败')
   } finally {
@@ -77,6 +84,12 @@ const refreshSelectedTeam = async () => {
   if (selectedTeam.value) {
     await loadTeamDetail(selectedTeam.value)
   }
+}
+
+const handleJoined = async () => {
+  showJoinPanel.value = false
+  showTeamList.value = true
+  await loadTeams({ keepSelection: true })
 }
 
 const leaveTeam = async (team) => {
@@ -142,7 +155,7 @@ const transferOwner = async (member) => {
   }
 }
 
-onMounted(loadTeams)
+onMounted(() => loadTeams({ keepSelection: false }))
 </script>
 
 <template>
@@ -151,7 +164,7 @@ onMounted(loadTeams)
       <div>
         <p class="eyebrow">Teams</p>
         <h1>小组协作</h1>
-        <p>创建小组共同目标、通过邀请码加入小组，并查看成员是否完成该小组目标。</p>
+        <p>通过邀请码加入小组，或查看已加入小组的目标、邀请码和成员今日状态。</p>
       </div>
 
       <el-button :loading="teamsLoading" @click="loadTeams">
@@ -161,28 +174,40 @@ onMounted(loadTeams)
 
     <div class="team-actions-grid">
       <TeamForm @created="loadTeams" />
-      <TeamJoinForm @joined="loadTeams" />
+
+      <div class="team-tools">
+        <div class="team-tool-buttons">
+          <el-button type="primary" plain @click="showJoinPanel = !showJoinPanel">
+            邀请码加入
+          </el-button>
+          <el-button type="primary" plain @click="showTeamList = !showTeamList">
+            我的小组
+          </el-button>
+        </div>
+
+        <TeamJoinForm v-if="showJoinPanel" @joined="handleJoined" />
+      </div>
     </div>
 
-    <div class="teams-layout">
+    <div v-if="showTeamList" class="teams-layout">
       <div v-loading="teamsLoading">
         <TeamList
           :teams="teams"
           :selected-team-id="selectedTeamId"
-          :leaving-team-id="leavingTeamId"
           @select="loadTeamDetail"
-          @leave="leaveTeam"
         />
       </div>
 
-      <div v-loading="detailLoading">
+      <div v-if="selectedTeam" v-loading="detailLoading">
         <TeamMembers
           :team="selectedTeam"
           :members="members"
           :today-checkins="todayCheckins"
           :current-user-id="currentUserId"
           :transferring-user-id="transferringUserId"
+          :leaving-team-id="leavingTeamId"
           @transfer-owner="transferOwner"
+          @leave="leaveTeam"
         />
       </div>
     </div>

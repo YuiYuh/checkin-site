@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { clearAuth, getCurrentUser, isLoggedIn, onAuthChange } from './utils/auth'
 
 const route = useRoute()
@@ -19,8 +20,17 @@ const showHeader = computed(() => {
   return loggedIn.value && route.name !== 'login'
 })
 
+const displayName = computed(() => {
+  return currentUser.value?.nickname || currentUser.value?.username || '用户'
+})
+
+const avatarText = computed(() => {
+  return displayName.value.trim().charAt(0) || '用'
+})
+
 const logout = () => {
   clearAuth()
+  ElMessage.success('已退出登录')
   router.push('/login')
 }
 
@@ -40,8 +50,19 @@ onBeforeUnmount(stopAuthListener)
           <router-link to="/">首页</router-link>
           <router-link to="/goals">目标</router-link>
           <router-link to="/teams">小组</router-link>
-          <el-button size="small" @click="logout">退出登录</el-button>
         </nav>
+
+        <el-dropdown trigger="click" placement="bottom-end" class="user-menu">
+          <button class="avatar-button" type="button" aria-label="用户菜单">
+            <el-avatar :size="36">{{ avatarText }}</el-avatar>
+          </button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <div class="user-menu-name">{{ displayName }}</div>
+              <el-dropdown-item divided @click="logout">退出登录</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </header>
 
       <main class="app-main">

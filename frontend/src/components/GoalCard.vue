@@ -22,21 +22,19 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['checkin', 'delete'])
+const emit = defineEmits(['checkin', 'cancel-checkin', 'delete'])
 </script>
 
 <template>
-  <el-card class="goal-card" shadow="never">
+  <el-card class="goal-card lift-card" shadow="never">
     <div class="goal-card-top">
-      <div>
+      <div class="goal-main">
         <div class="goal-title-line">
           <h3>{{ props.goal.title }}</h3>
           <el-tag v-if="props.goal.goalType === 'TEAM'" type="warning" effect="plain">
             小组目标
           </el-tag>
-          <el-tag v-else effect="plain">
-            个人目标
-          </el-tag>
+          <el-tag v-else effect="plain">个人目标</el-tag>
         </div>
         <p>{{ props.goal.description || '暂无描述' }}</p>
         <p v-if="props.goal.goalType === 'TEAM'" class="goal-team-name">
@@ -44,7 +42,7 @@ const emit = defineEmits(['checkin', 'delete'])
         </p>
       </div>
 
-      <el-tag :type="props.checkedToday ? 'success' : 'info'" effect="plain">
+      <el-tag :type="props.checkedToday ? 'success' : 'info'" effect="plain" round>
         {{ props.checkedToday ? '今日已打卡' : '今日未打卡' }}
       </el-tag>
     </div>
@@ -69,12 +67,12 @@ const emit = defineEmits(['checkin', 'delete'])
 
     <div class="goal-actions">
       <el-button
-        type="primary"
-        :disabled="props.checkedToday"
+        :type="props.checkedToday ? 'warning' : 'primary'"
+        :plain="props.checkedToday"
         :loading="props.loading"
-        @click="emit('checkin', props.goal)"
+        @click="props.checkedToday ? emit('cancel-checkin', props.goal) : emit('checkin', props.goal)"
       >
-        {{ props.checkedToday ? '今日已打卡' : '今日打卡' }}
+        {{ props.checkedToday ? '取消打卡' : '今日打卡' }}
       </el-button>
       <el-button
         type="danger"

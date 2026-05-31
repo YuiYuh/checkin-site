@@ -15,8 +15,8 @@ const form = reactive({
 })
 
 const redirectAfterLogin = () => {
-  const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/goals'
-  router.push(redirect === '/login' ? '/goals' : redirect)
+  const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
+  router.push(redirect === '/login' ? '/' : redirect)
 }
 
 const login = async () => {
@@ -60,9 +60,9 @@ const useDemo = () => {
   <section class="auth-page">
     <div class="auth-panel">
       <div class="section-heading">
-        <p class="eyebrow">HabitLink MVP</p>
+        <p class="eyebrow">HabitLink</p>
         <h1>登录</h1>
-        <p>登录后进入目标和小组演示页面。</p>
+        <p>登录后进入学习打卡看板，管理目标和小组协作。</p>
       </div>
 
       <el-form class="login-form" label-position="top" @submit.prevent>

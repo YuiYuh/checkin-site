@@ -47,7 +47,7 @@ const createGoal = async () => {
 </script>
 
 <template>
-  <el-card class="goal-form-card" shadow="never">
+  <el-card class="goal-form-card lift-card" shadow="never">
     <template #header>
       <div class="card-header">
         <h2>创建目标</h2>

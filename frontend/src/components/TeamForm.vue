@@ -25,7 +25,7 @@ const resetForm = () => {
 }
 
 const createTeam = async () => {
-  if (!form.name) {
+  if (!form.name.trim()) {
     ElMessage.warning('请输入小组名称')
     return
   }
@@ -33,7 +33,7 @@ const createTeam = async () => {
   loading.value = true
   try {
     await api.post('/api/teams', {
-      name: form.name,
+      name: form.name.trim(),
       description: form.description,
       goalTitle: form.goalTitle,
       goalDescription: form.goalDescription,
@@ -53,7 +53,7 @@ const createTeam = async () => {
 </script>
 
 <template>
-  <el-card class="team-action-card" shadow="never">
+  <el-card class="team-action-card lift-card" shadow="never">
     <template #header>
       <div class="card-header">
         <h2>创建小组</h2>

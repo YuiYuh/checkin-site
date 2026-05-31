@@ -4,7 +4,7 @@ import { computed } from 'vue'
 const props = defineProps({
   team: {
     type: Object,
-    default: null,
+    required: true,
   },
   members: {
     type: Array,
@@ -22,9 +22,13 @@ const props = defineProps({
     type: Number,
     default: null,
   },
+  leavingTeamId: {
+    type: Number,
+    default: null,
+  },
 })
 
-const emit = defineEmits(['transfer-owner'])
+const emit = defineEmits(['transfer-owner', 'leave'])
 
 const teamGoalTitle = computed(() => {
   return props.todayCheckins.find((item) => item.goalTitle)?.goalTitle || props.team?.goalTitle || ''
@@ -55,19 +59,23 @@ const currentUserIsOwner = computed(() => {
     <template #header>
       <div class="card-header team-members-header">
         <div>
-          <h2>小组成员</h2>
-          <p v-if="props.team">
-            {{ props.team.name }} · 邀请码：{{ props.team.inviteCode || '-' }}
-          </p>
-          <p v-if="props.team">
-            小组目标：{{ teamGoalTitle || '未绑定目标' }}
-          </p>
+          <h2>{{ props.team.name }}</h2>
+          <p>小组目标：{{ teamGoalTitle || '未绑定目标' }}</p>
+          <p>邀请码：{{ props.team.inviteCode || '-' }}</p>
         </div>
+        <el-button
+          type="danger"
+          plain
+          :loading="props.leavingTeamId === props.team.id"
+          :disabled="props.leavingTeamId !== null"
+          @click="emit('leave', props.team)"
+        >
+          退出小组
+        </el-button>
       </div>
     </template>
 
-    <el-empty v-if="!props.team" description="请选择一个小组查看成员" />
-    <el-empty v-else-if="rows.length === 0" description="暂无成员" />
+    <el-empty v-if="rows.length === 0" description="暂无成员" />
 
     <el-table v-else :data="rows" class="members-table">
       <el-table-column prop="nickname" label="昵称" min-width="130">
@@ -86,10 +94,10 @@ const currentUserIsOwner = computed(() => {
         </template>
       </el-table-column>
 
-      <el-table-column prop="checkedToday" label="小组目标状态" min-width="190">
+      <el-table-column prop="checkedToday" label="今日完成状态" min-width="150">
         <template #default="{ row }">
           <el-tag :type="row.checkedToday ? 'success' : 'info'" effect="plain">
-            {{ row.checkedToday ? '今日已完成小组目标' : '今日未完成小组目标' }}
+            {{ row.checkedToday ? '已完成' : '未完成' }}
           </el-tag>
         </template>
       </el-table-column>

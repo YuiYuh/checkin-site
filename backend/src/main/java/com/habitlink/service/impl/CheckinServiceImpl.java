@@ -75,6 +75,22 @@ public class CheckinServiceImpl implements CheckinService {
         return existsCheckin(goalId, LocalDate.now(), currentUserId);
     }
 
+    @Override
+    public void cancelTodayCheckin(Long goalId, Long currentUserId) {
+        validateGoalId(goalId);
+        checkGoalAccessible(goalId, currentUserId);
+
+        LocalDate today = LocalDate.now();
+        if (!existsCheckin(goalId, today, currentUserId)) {
+            throw new IllegalArgumentException("今日尚未打卡");
+        }
+
+        checkinMapper.delete(new LambdaQueryWrapper<CheckinRecord>()
+                .eq(CheckinRecord::getUserId, currentUserId)
+                .eq(CheckinRecord::getGoalId, goalId)
+                .eq(CheckinRecord::getCheckinDate, today));
+    }
+
     private void validateGoalId(Long goalId) {
         if (goalId == null) {
             throw new IllegalArgumentException("目标ID不能为空");

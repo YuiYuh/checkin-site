@@ -1,7 +1,13 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import api from '../api'
+import api, {
+  cancelTodayCheckin,
+  createTodayCheckin,
+  getGoalStats,
+  getGoals,
+  getTodayCheckinStatus,
+} from '../api'
 import GoalCard from '../components/GoalCard.vue'
 import GoalForm from '../components/GoalForm.vue'
 
@@ -14,18 +20,18 @@ const todayStatus = reactive({})
 
 const loadGoalDetail = async (goalId) => {
   const [stats, checkedToday] = await Promise.all([
-    api.get(`/api/goals/${goalId}/stats`),
-    api.get(`/api/checkins/today/${goalId}`),
+    getGoalStats(goalId),
+    getTodayCheckinStatus(goalId),
   ])
 
   goalStats[goalId] = stats || { totalDays: 0, continuousDays: 0 }
-  todayStatus[goalId] = Boolean(checkedToday)
+  todayStatus[goalId] = checkedToday
 }
 
 const loadGoals = async () => {
   pageLoading.value = true
   try {
-    const result = await api.get('/api/goals')
+    const result = await getGoals()
     goals.value = Array.isArray(result) ? result : []
 
     await Promise.all(goals.value.map((goal) => loadGoalDetail(goal.id)))
@@ -47,15 +53,35 @@ const refreshGoal = async (goalId) => {
 const checkinToday = async (goal) => {
   checkinLoading[goal.id] = true
   try {
-    await api.post('/api/checkins', {
-      goalId: goal.id,
-      content: '前端 MVP 今日打卡',
-    })
-
+    await createTodayCheckin(goal.id)
     ElMessage.success('打卡成功')
     await refreshGoal(goal.id)
   } catch (error) {
     ElMessage.error(error.message || '打卡失败')
+    await refreshGoal(goal.id)
+  } finally {
+    checkinLoading[goal.id] = false
+  }
+}
+
+const cancelCheckinToday = async (goal) => {
+  try {
+    await ElMessageBox.confirm('确定要取消今日打卡吗？', '取消打卡', {
+      confirmButtonText: '取消打卡',
+      cancelButtonText: '返回',
+      type: 'warning',
+    })
+  } catch {
+    return
+  }
+
+  checkinLoading[goal.id] = true
+  try {
+    await cancelTodayCheckin(goal.id)
+    ElMessage.success('已取消今日打卡')
+    await refreshGoal(goal.id)
+  } catch (error) {
+    ElMessage.error(error.message || '取消打卡失败')
     await refreshGoal(goal.id)
   } finally {
     checkinLoading[goal.id] = false
@@ -98,7 +124,7 @@ onMounted(loadGoals)
       <div>
         <p class="eyebrow">Goals</p>
         <h1>目标列表</h1>
-        <p>展示所有目标、今日打卡状态，以及累计和连续打卡天数。</p>
+        <p>管理个人目标和小组目标，查看今日打卡状态、累计天数和连续打卡表现。</p>
       </div>
 
       <el-button :loading="pageLoading" @click="loadGoals">
@@ -121,6 +147,7 @@ onMounted(loadGoals)
           :loading="checkinLoading[goal.id]"
           :deleting="deleteLoading[goal.id]"
           @checkin="checkinToday"
+          @cancel-checkin="cancelCheckinToday"
           @delete="deleteGoal"
         />
       </div>

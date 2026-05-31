@@ -365,3 +365,28 @@ checkin_record.checkin_date = 今天
 - 新组长必须是当前小组成员。
 - 不能转让给自己。
 - 成功后返回 `组长转让成功`。
+## 更新：撤销今日打卡
+
+- 方法：`DELETE`
+- 路径：`/api/checkins/today/{goalId}`
+- 说明：撤销当前登录用户今天对指定目标的打卡记录。
+- 鉴权：需要 `Authorization: Bearer <token>`。
+
+规则：
+
+- 当前用户必须有权限访问该目标。
+- 可访问目标包括：自己创建的个人目标，或自己已加入小组绑定的目标。
+- 删除条件只匹配今天：`user_id = 当前用户`、`goal_id = goalId`、`checkin_date = LocalDate.now()`。
+- 不删除历史打卡记录。
+- 如果目标不存在或无权限，返回清晰错误。
+- 如果今天没有打卡记录，返回 `今日尚未打卡`。
+
+成功响应：
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": "取消今日打卡成功"
+}
+```

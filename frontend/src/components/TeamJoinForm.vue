@@ -11,7 +11,7 @@ const form = reactive({
 })
 
 const joinTeam = async () => {
-  if (!form.inviteCode) {
+  if (!form.inviteCode.trim()) {
     ElMessage.warning('请输入邀请码')
     return
   }
@@ -34,14 +34,8 @@ const joinTeam = async () => {
 </script>
 
 <template>
-  <el-card class="team-action-card" shadow="never">
-    <template #header>
-      <div class="card-header">
-        <h2>邀请码加入</h2>
-      </div>
-    </template>
-
-    <el-form label-position="top" @submit.prevent>
+  <el-card class="team-action-card compact-panel" shadow="never">
+    <el-form class="join-team-form" label-position="top" @submit.prevent>
       <el-form-item label="邀请码">
         <el-input
           v-model="form.inviteCode"
@@ -50,8 +44,8 @@ const joinTeam = async () => {
         />
       </el-form-item>
 
-      <el-button type="primary" plain :loading="loading" @click="joinTeam">
-        加入小组
+      <el-button type="primary" :loading="loading" @click="joinTeam">
+        加入
       </el-button>
     </el-form>
   </el-card>

@@ -6,6 +6,7 @@ import com.habitlink.dto.CheckinRequest;
 import com.habitlink.entity.CheckinRecord;
 import com.habitlink.service.CheckinService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,5 +41,12 @@ public class CheckinController {
     public Result<Boolean> hasCheckedToday(@PathVariable Long goalId,
                                            @RequestHeader(value = "Authorization", required = false) String authorization) {
         return Result.success(checkinService.hasCheckedToday(goalId, authUtil.parseUserId(authorization)));
+    }
+
+    @DeleteMapping("/today/{goalId}")
+    public Result<String> cancelTodayCheckin(@PathVariable Long goalId,
+                                             @RequestHeader(value = "Authorization", required = false) String authorization) {
+        checkinService.cancelTodayCheckin(goalId, authUtil.parseUserId(authorization));
+        return Result.success("取消今日打卡成功");
     }
 }

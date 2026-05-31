@@ -12,4 +12,6 @@ public interface CheckinService {
     List<CheckinRecord> listGoalCheckins(Long goalId, Long currentUserId);
 
     Boolean hasCheckedToday(Long goalId, Long currentUserId);
+
+    void cancelTodayCheckin(Long goalId, Long currentUserId);
 }

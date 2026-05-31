@@ -12,6 +12,37 @@ const api = axios.create({
   timeout: 10000,
 })
 
+export const normalizeCheckedToday = (value) => {
+  if (typeof value === 'boolean') {
+    return value
+  }
+
+  if (value && typeof value === 'object') {
+    return Boolean(value.checkedToday ?? value.hasCheckedToday ?? value.checked ?? value.data)
+  }
+
+  return false
+}
+
+export const getGoals = () => api.get('/api/goals')
+
+export const getTeams = () => api.get('/api/teams/my')
+
+export const getGoalStats = (goalId) => api.get(`/api/goals/${goalId}/stats`)
+
+export const getTodayCheckinStatus = async (goalId) => {
+  const result = await api.get(`/api/checkins/today/${goalId}`)
+  return normalizeCheckedToday(result)
+}
+
+export const createTodayCheckin = (goalId, content = '今日学习打卡') => {
+  return api.post('/api/checkins', { goalId, content })
+}
+
+export const cancelTodayCheckin = (goalId) => {
+  return api.delete(`/api/checkins/today/${goalId}`)
+}
+
 const isAuthExpired = (message, status) => {
   if (status === 401) {
     return true
