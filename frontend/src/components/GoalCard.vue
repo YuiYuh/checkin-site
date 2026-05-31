@@ -42,17 +42,18 @@ const emit = defineEmits(['checkin', 'cancel-checkin', 'delete'])
         </p>
       </div>
 
-      <el-tag :type="props.checkedToday ? 'success' : 'info'" effect="plain" round>
-        {{ props.checkedToday ? '今日已打卡' : '今日未打卡' }}
+      <el-tag :type="props.checkedToday ? 'success' : 'warning'" effect="plain" round>
+        {{ props.checkedToday ? '今日已完成' : '今日待完成' }}
       </el-tag>
     </div>
 
     <div class="goal-dates">
-      <span>开始：{{ props.goal.startDate || '-' }}</span>
-      <span>结束：{{ props.goal.endDate || '-' }}</span>
+      <span>{{ props.goal.startDate || '-' }}</span>
+      <span>至</span>
+      <span>{{ props.goal.endDate || '-' }}</span>
     </div>
 
-    <div class="stats-grid">
+    <div class="stats-grid compact">
       <div>
         <span>累计打卡</span>
         <strong>{{ props.stats?.totalDays || 0 }}</strong>
@@ -74,15 +75,17 @@ const emit = defineEmits(['checkin', 'cancel-checkin', 'delete'])
       >
         {{ props.checkedToday ? '取消打卡' : '今日打卡' }}
       </el-button>
+
       <el-button
+        v-if="props.goal.goalType !== 'TEAM'"
         type="danger"
         plain
-        :disabled="props.goal.goalType === 'TEAM'"
         :loading="props.deleting"
         @click="emit('delete', props.goal)"
       >
-        删除目标
+        删除
       </el-button>
+      <span v-else class="muted-action">由小组管理</span>
     </div>
   </el-card>
 </template>

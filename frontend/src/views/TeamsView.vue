@@ -159,57 +159,70 @@ onMounted(() => loadTeams({ keepSelection: false }))
 </script>
 
 <template>
-  <section class="teams-page">
-    <div class="page-title-row">
+  <section class="teams-page page-fade">
+    <div class="hero-panel page-hero">
       <div>
         <p class="eyebrow">Teams</p>
         <h1>小组协作</h1>
-        <p>通过邀请码加入小组，或查看已加入小组的目标、邀请码和成员今日状态。</p>
+        <p>用共同目标和成员状态，让学习节奏更容易坚持。</p>
       </div>
-
-      <el-button :loading="teamsLoading" @click="loadTeams">
-        刷新
-      </el-button>
+      <div class="summary-pills">
+        <span><strong>{{ teams.length }}</strong> 我的小组</span>
+        <span><strong>{{ selectedTeam ? members.length : 0 }}</strong> 当前成员</span>
+      </div>
     </div>
 
     <div class="team-actions-grid">
       <TeamForm @created="loadTeams" />
 
       <div class="team-tools">
-        <div class="team-tool-buttons">
-          <el-button type="primary" plain @click="showJoinPanel = !showJoinPanel">
-            邀请码加入
-          </el-button>
-          <el-button type="primary" plain @click="showTeamList = !showTeamList">
-            我的小组
-          </el-button>
+        <el-card class="team-tool-card lift-card" shadow="never">
+          <h2>快速操作</h2>
+          <p>加入已有小组，或展开我的小组列表查看详情。</p>
+          <div class="team-tool-buttons">
+            <el-button type="primary" plain @click="showJoinPanel = !showJoinPanel">
+              邀请码加入
+            </el-button>
+            <el-button type="primary" plain @click="showTeamList = !showTeamList">
+              我的小组
+            </el-button>
+            <el-button :loading="teamsLoading" @click="loadTeams">刷新</el-button>
+          </div>
+        </el-card>
+
+        <transition name="soft-expand">
+          <TeamJoinForm v-if="showJoinPanel" @joined="handleJoined" />
+        </transition>
+      </div>
+    </div>
+
+    <transition name="soft-expand">
+      <div v-if="showTeamList" class="teams-layout">
+        <div v-loading="teamsLoading">
+          <TeamList
+            :teams="teams"
+            :selected-team-id="selectedTeamId"
+            @select="loadTeamDetail"
+          />
         </div>
 
-        <TeamJoinForm v-if="showJoinPanel" @joined="handleJoined" />
+        <div v-loading="detailLoading">
+          <TeamMembers
+            v-if="selectedTeam"
+            :team="selectedTeam"
+            :members="members"
+            :today-checkins="todayCheckins"
+            :current-user-id="currentUserId"
+            :transferring-user-id="transferringUserId"
+            :leaving-team-id="leavingTeamId"
+            @transfer-owner="transferOwner"
+            @leave="leaveTeam"
+          />
+          <el-card v-else class="team-empty-detail lift-card" shadow="never">
+            <el-empty description="选择一个小组查看共同目标和成员状态" />
+          </el-card>
+        </div>
       </div>
-    </div>
-
-    <div v-if="showTeamList" class="teams-layout">
-      <div v-loading="teamsLoading">
-        <TeamList
-          :teams="teams"
-          :selected-team-id="selectedTeamId"
-          @select="loadTeamDetail"
-        />
-      </div>
-
-      <div v-if="selectedTeam" v-loading="detailLoading">
-        <TeamMembers
-          :team="selectedTeam"
-          :members="members"
-          :today-checkins="todayCheckins"
-          :current-user-id="currentUserId"
-          :transferring-user-id="transferringUserId"
-          :leaving-team-id="leavingTeamId"
-          @transfer-owner="transferOwner"
-          @leave="leaveTeam"
-        />
-      </div>
-    </div>
+    </transition>
   </section>
 </template>

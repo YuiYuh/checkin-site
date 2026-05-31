@@ -53,10 +53,13 @@ const createTeam = async () => {
 </script>
 
 <template>
-  <el-card class="team-action-card lift-card" shadow="never">
+  <el-card class="team-action-card form-card lift-card" shadow="never">
     <template #header>
       <div class="card-header">
-        <h2>创建小组</h2>
+        <div>
+          <h2>创建小组</h2>
+          <p>为一组同学建立共同目标和打卡节奏。</p>
+        </div>
       </div>
     </template>
 
@@ -69,7 +72,7 @@ const createTeam = async () => {
         <el-input v-model="form.description" :rows="2" placeholder="补充小组说明" type="textarea" />
       </el-form-item>
 
-      <el-divider content-position="left">小组目标</el-divider>
+      <el-divider content-position="left">共同目标</el-divider>
 
       <el-form-item label="目标标题">
         <el-input v-model="form.goalTitle" placeholder="为空时默认使用小组名称" />

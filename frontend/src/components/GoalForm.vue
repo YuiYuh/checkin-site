@@ -21,7 +21,7 @@ const resetForm = () => {
 }
 
 const createGoal = async () => {
-  if (!form.title || !form.startDate || !form.endDate) {
+  if (!form.title.trim() || !form.startDate || !form.endDate) {
     ElMessage.warning('请填写目标标题、开始日期和结束日期')
     return
   }
@@ -29,7 +29,7 @@ const createGoal = async () => {
   loading.value = true
   try {
     await api.post('/api/goals', {
-      title: form.title,
+      title: form.title.trim(),
       description: form.description,
       startDate: form.startDate,
       endDate: form.endDate,
@@ -47,10 +47,13 @@ const createGoal = async () => {
 </script>
 
 <template>
-  <el-card class="goal-form-card lift-card" shadow="never">
+  <el-card class="goal-form-card form-card" shadow="never">
     <template #header>
       <div class="card-header">
-        <h2>创建目标</h2>
+        <div>
+          <h2>新建学习目标</h2>
+          <p>设置一个清晰、可每天推进的目标。</p>
+        </div>
       </div>
     </template>
 

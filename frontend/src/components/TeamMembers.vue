@@ -34,6 +34,8 @@ const teamGoalTitle = computed(() => {
   return props.todayCheckins.find((item) => item.goalTitle)?.goalTitle || props.team?.goalTitle || ''
 })
 
+const hasTeamGoal = computed(() => Boolean(teamGoalTitle.value))
+
 const rows = computed(() => {
   const checkinMap = new Map(
     props.todayCheckins.map((item) => [item.userId, Boolean(item.checkedToday)]),
@@ -41,7 +43,7 @@ const rows = computed(() => {
 
   return props.members.map((member) => ({
     ...member,
-    checkedToday: checkinMap.get(member.userId) || false,
+    checkedToday: hasTeamGoal.value ? checkinMap.get(member.userId) || false : null,
   }))
 })
 
@@ -55,13 +57,13 @@ const currentUserIsOwner = computed(() => {
 </script>
 
 <template>
-  <el-card class="team-members-card" shadow="never">
+  <el-card class="team-members-card lift-card" shadow="never">
     <template #header>
-      <div class="card-header team-members-header">
+      <div class="team-detail-header">
         <div>
+          <p class="eyebrow">Team detail</p>
           <h2>{{ props.team.name }}</h2>
-          <p>小组目标：{{ teamGoalTitle || '未绑定目标' }}</p>
-          <p>邀请码：{{ props.team.inviteCode || '-' }}</p>
+          <p>{{ props.team.description || '暂无小组描述' }}</p>
         </div>
         <el-button
           type="danger"
@@ -75,10 +77,25 @@ const currentUserIsOwner = computed(() => {
       </div>
     </template>
 
+    <div class="team-detail-meta">
+      <div>
+        <span>共同目标</span>
+        <strong>{{ teamGoalTitle || '无共同目标' }}</strong>
+      </div>
+      <div>
+        <span>邀请码</span>
+        <strong>{{ props.team.inviteCode || '-' }}</strong>
+      </div>
+      <div>
+        <span>成员数</span>
+        <strong>{{ rows.length }}</strong>
+      </div>
+    </div>
+
     <el-empty v-if="rows.length === 0" description="暂无成员" />
 
     <el-table v-else :data="rows" class="members-table">
-      <el-table-column prop="nickname" label="昵称" min-width="130">
+      <el-table-column prop="nickname" label="成员" min-width="130">
         <template #default="{ row }">
           {{ row.nickname || row.username || `用户 ${row.userId}` }}
         </template>
@@ -94,11 +111,11 @@ const currentUserIsOwner = computed(() => {
         </template>
       </el-table-column>
 
-      <el-table-column prop="checkedToday" label="今日完成状态" min-width="150">
+      <el-table-column prop="checkedToday" label="今日状态" min-width="140">
         <template #default="{ row }">
-          <el-tag :type="row.checkedToday ? 'success' : 'info'" effect="plain">
-            {{ row.checkedToday ? '已完成' : '未完成' }}
-          </el-tag>
+          <el-tag v-if="row.checkedToday === null" type="info" effect="plain">无共同目标</el-tag>
+          <el-tag v-else-if="row.checkedToday" type="success" effect="plain">已完成</el-tag>
+          <el-tag v-else type="warning" effect="plain">未完成</el-tag>
         </template>
       </el-table-column>
 

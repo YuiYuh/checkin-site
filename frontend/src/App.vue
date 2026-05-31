@@ -16,9 +16,7 @@ const refreshAuth = () => {
 
 const stopAuthListener = onAuthChange(refreshAuth)
 
-const showHeader = computed(() => {
-  return loggedIn.value && route.name !== 'login'
-})
+const showHeader = computed(() => loggedIn.value && route.name !== 'login')
 
 const displayName = computed(() => {
   return currentUser.value?.nickname || currentUser.value?.username || '用户'
@@ -43,7 +41,10 @@ onBeforeUnmount(stopAuthListener)
       <header v-if="showHeader" class="app-header">
         <router-link class="brand" to="/">
           <span class="brand-mark">H</span>
-          <span>HabitLink</span>
+          <span class="brand-copy">
+            <strong>HabitLink</strong>
+            <small>把目标变成每天的行动</small>
+          </span>
         </router-link>
 
         <nav class="app-nav">
@@ -54,7 +55,7 @@ onBeforeUnmount(stopAuthListener)
 
         <el-dropdown trigger="click" placement="bottom-end" class="user-menu">
           <button class="avatar-button" type="button" aria-label="用户菜单">
-            <el-avatar :size="36">{{ avatarText }}</el-avatar>
+            <el-avatar :size="38">{{ avatarText }}</el-avatar>
           </button>
           <template #dropdown>
             <el-dropdown-menu>

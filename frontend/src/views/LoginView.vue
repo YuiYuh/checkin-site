@@ -52,48 +52,67 @@ const login = async () => {
 }
 
 const useDemo = () => {
-  ElMessage.warning('签名登录已启用，请使用测试账号密码登录')
+  ElMessage.warning('请使用测试账号密码登录')
 }
 </script>
 
 <template>
   <section class="auth-page">
-    <div class="auth-panel">
-      <div class="section-heading">
-        <p class="eyebrow">HabitLink</p>
-        <h1>登录</h1>
-        <p>登录后进入学习打卡看板，管理目标和小组协作。</p>
+    <div class="auth-layout">
+      <div class="auth-intro">
+        <div class="brand-lockup">
+          <span class="brand-mark large">H</span>
+          <div>
+            <strong>HabitLink</strong>
+            <span>学习目标协作打卡</span>
+          </div>
+        </div>
+        <h1>把目标变成每天的行动</h1>
+        <p>记录目标、完成今日打卡、和小组成员一起保持节奏。</p>
+        <div class="auth-feature-list">
+          <span>目标打卡</span>
+          <span>小组监督</span>
+          <span>连续统计</span>
+        </div>
       </div>
 
-      <el-form class="login-form" label-position="top" @submit.prevent>
-        <el-form-item label="用户名">
-          <el-input
-            v-model="form.username"
-            placeholder="请输入用户名"
-            size="large"
-            autocomplete="username"
-          />
-        </el-form-item>
+      <el-card class="auth-panel" shadow="never">
+        <div class="section-heading compact">
+          <p class="eyebrow">Welcome back</p>
+          <h2>登录 HabitLink</h2>
+          <p>进入你的学习效率看板。</p>
+        </div>
 
-        <el-form-item label="密码">
-          <el-input
-            v-model="form.password"
-            placeholder="请输入密码"
-            show-password
-            size="large"
-            type="password"
-            autocomplete="current-password"
-            @keyup.enter="login"
-          />
-        </el-form-item>
+        <el-form class="login-form" label-position="top" @submit.prevent>
+          <el-form-item label="用户名">
+            <el-input
+              v-model="form.username"
+              placeholder="请输入用户名"
+              size="large"
+              autocomplete="username"
+            />
+          </el-form-item>
 
-        <el-button type="primary" size="large" :loading="loading" @click="login">
-          登录
-        </el-button>
-        <el-button v-if="enableDemoUser" size="large" @click="useDemo">
-          使用默认用户
-        </el-button>
-      </el-form>
+          <el-form-item label="密码">
+            <el-input
+              v-model="form.password"
+              placeholder="请输入密码"
+              show-password
+              size="large"
+              type="password"
+              autocomplete="current-password"
+              @keyup.enter="login"
+            />
+          </el-form-item>
+
+          <el-button type="primary" size="large" :loading="loading" @click="login">
+            登录
+          </el-button>
+          <el-button v-if="enableDemoUser" size="large" @click="useDemo">
+            使用默认用户
+          </el-button>
+        </el-form>
+      </el-card>
     </div>
   </section>
 </template>

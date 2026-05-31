@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api, {
   cancelTodayCheckin,
@@ -13,10 +13,14 @@ import GoalForm from '../components/GoalForm.vue'
 
 const goals = ref([])
 const pageLoading = ref(false)
+const showCreateForm = ref(false)
 const checkinLoading = reactive({})
 const deleteLoading = reactive({})
 const goalStats = reactive({})
 const todayStatus = reactive({})
+
+const checkedCount = computed(() => goals.value.filter((goal) => todayStatus[goal.id]).length)
+const pendingCount = computed(() => Math.max(goals.value.length - checkedCount.value, 0))
 
 const loadGoalDetail = async (goalId) => {
   const [stats, checkedToday] = await Promise.all([
@@ -33,7 +37,6 @@ const loadGoals = async () => {
   try {
     const result = await getGoals()
     goals.value = Array.isArray(result) ? result : []
-
     await Promise.all(goals.value.map((goal) => loadGoalDetail(goal.id)))
   } catch (error) {
     ElMessage.error(error.message || '加载目标失败')
@@ -48,6 +51,11 @@ const refreshGoal = async (goalId) => {
   } catch (error) {
     ElMessage.error(error.message || '刷新目标状态失败')
   }
+}
+
+const handleCreated = async () => {
+  showCreateForm.value = false
+  await loadGoals()
 }
 
 const checkinToday = async (goal) => {
@@ -119,38 +127,46 @@ onMounted(loadGoals)
 </script>
 
 <template>
-  <section class="goals-page">
-    <div class="page-title-row">
+  <section class="goals-page page-fade">
+    <div class="hero-panel page-hero">
       <div>
         <p class="eyebrow">Goals</p>
-        <h1>目标列表</h1>
-        <p>管理个人目标和小组目标，查看今日打卡状态、累计天数和连续打卡表现。</p>
+        <h1>目标管理</h1>
+        <p>把学习计划拆成每天可以完成的行动。</p>
       </div>
-
-      <el-button :loading="pageLoading" @click="loadGoals">
-        刷新
-      </el-button>
+      <div class="summary-pills">
+        <span><strong>{{ goals.length }}</strong> 总目标</span>
+        <span><strong>{{ checkedCount }}</strong> 今日完成</span>
+        <span><strong>{{ pendingCount }}</strong> 今日待完成</span>
+      </div>
     </div>
 
-    <div class="goals-layout">
-      <GoalForm @created="loadGoals" />
+    <div class="toolbar-row">
+      <el-button type="primary" @click="showCreateForm = !showCreateForm">
+        {{ showCreateForm ? '收起表单' : '新建目标' }}
+      </el-button>
+      <el-button :loading="pageLoading" @click="loadGoals">刷新</el-button>
+    </div>
 
-      <div class="goals-list" v-loading="pageLoading">
-        <el-empty v-if="!pageLoading && goals.length === 0" description="暂无目标，请先创建一个目标" />
+    <transition name="soft-expand">
+      <GoalForm v-if="showCreateForm" @created="handleCreated" />
+    </transition>
 
-        <GoalCard
-          v-for="goal in goals"
-          :key="goal.id"
-          :goal="goal"
-          :stats="goalStats[goal.id]"
-          :checked-today="todayStatus[goal.id]"
-          :loading="checkinLoading[goal.id]"
-          :deleting="deleteLoading[goal.id]"
-          @checkin="checkinToday"
-          @cancel-checkin="cancelCheckinToday"
-          @delete="deleteGoal"
-        />
-      </div>
+    <div class="goals-list goal-card-grid" v-loading="pageLoading">
+      <el-empty v-if="!pageLoading && goals.length === 0" description="暂无目标，请先创建一个目标" />
+
+      <GoalCard
+        v-for="goal in goals"
+        :key="goal.id"
+        :goal="goal"
+        :stats="goalStats[goal.id]"
+        :checked-today="todayStatus[goal.id]"
+        :loading="checkinLoading[goal.id]"
+        :deleting="deleteLoading[goal.id]"
+        @checkin="checkinToday"
+        @cancel-checkin="cancelCheckinToday"
+        @delete="deleteGoal"
+      />
     </div>
   </section>
 </template>

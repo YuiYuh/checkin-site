@@ -45,7 +45,7 @@ const joinTeam = async () => {
       </el-form-item>
 
       <el-button type="primary" :loading="loading" @click="joinTeam">
-        加入
+        加入小组
       </el-button>
     </el-form>
   </el-card>

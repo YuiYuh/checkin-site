@@ -14,10 +14,13 @@ const emit = defineEmits(['select'])
 </script>
 
 <template>
-  <el-card class="team-list-card" shadow="never">
+  <el-card class="team-list-card lift-card" shadow="never">
     <template #header>
       <div class="card-header">
-        <h2>我的小组</h2>
+        <div>
+          <h2>我的小组</h2>
+          <p>选择一个小组查看成员和今日完成状态。</p>
+        </div>
       </div>
     </template>
 
@@ -33,6 +36,11 @@ const emit = defineEmits(['select'])
         <div class="team-list-content">
           <span class="team-name">{{ team.name }}</span>
           <span class="team-description">{{ team.description || '暂无描述' }}</span>
+          <span class="team-meta">
+            <span class="team-goal-name">目标：{{ team.goalTitle || '未绑定目标' }}</span>
+            <span class="invite-code">邀请码：{{ team.inviteCode || '-' }}</span>
+            <span class="role-chip">我的角色：{{ team.role === 'OWNER' ? '组长' : '成员' }}</span>
+          </span>
         </div>
         <el-button size="small" type="primary" plain @click="emit('select', team)">
           查看小组
